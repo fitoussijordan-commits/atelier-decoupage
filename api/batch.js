@@ -18,6 +18,18 @@ module.exports = async (req, res) => {
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
+    if (op === 'library') {
+      const q = new URLSearchParams({ page_size: '30', language: 'fr', sort: 'usage_character_count_7d' });
+      for (const k of ['search', 'age', 'gender', 'category', 'use_cases', 'descriptives']) if (req.query[k]) q.set(k, req.query[k]);
+      const r = await fetch(API + '/shared-voices?' + q, { headers: { 'xi-api-key': key } });
+      if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status, body: (await r.text()).slice(0, 300) });
+      const j = await r.json();
+      return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, owner: v.public_owner_id, name: v.name, age: v.age, gender: v.gender, use: v.use_case, desc: (v.description || '').slice(0, 120), lang: v.language, accent: v.accent })) });
+    }
+    if (op === 'add') {
+      const r = await fetch(`${API}/voices/add/${encodeURIComponent(req.query.owner)}/${encodeURIComponent(req.query.voice)}`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ new_name: req.query.name || 'voix' }) });
+      return res.status(200).json({ status: r.status, body: (await r.text()).slice(0, 300) });
+    }
     const ep = req.query.ep, E = EPISODES[ep];
     if (!okEp(ep) || !E) return res.status(400).json({ error: 'épisode inconnu' });
     const m = await readManifest(ep);
