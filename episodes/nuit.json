@@ -208,5 +208,11 @@
    "dur": 10
   }
  ],
- "voices": {}
+ "voices": {
+  "Roux": "TX3LPaxmHKxFdv7VOQHJ",
+  "Olympe": "pFZP5JQG7iQjIQuC4Bku",
+  "Caramel": "nPczCjzI2devNBz1zQrb",
+  "Pistache": "cgSgspJ2msm6clMCkdW9",
+  "Narrateur": "JBFqnCBsd6RMkjVDRZzb"
+ }
 }
