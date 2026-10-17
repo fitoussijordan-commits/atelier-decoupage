@@ -41,6 +41,7 @@ button{cursor:pointer}
 #scrub{flex:1;min-width:0;accent-color:var(--accent)}
 .time{font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--muted);flex:none;min-width:5.6em;text-align:right}
 .status{min-height:1.3em;font-size:.82rem;color:var(--muted);margin-top:4px}
+.epbar{display:flex;gap:8px;align-items:center;padding:2px 0 4px}.epbar select{flex:1;min-width:0}
 .strip{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;scrollbar-width:thin}
 .chip{flex:none;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 12px;font-size:.85rem;white-space:nowrap}
 .chip b{font-family:var(--font-d);color:var(--muted)}
@@ -114,6 +115,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="time" id="time">0:00.0</div>
     </div>
     <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="epbar" id="epbar"></div>
     <div class="strip" id="strip"></div>
   </section>
 
@@ -334,6 +336,13 @@ function defaultProject(){
   return {v:1,scenes:sc,custom:{},voices:{}};
 }
 let P=defaultProject();
+P.eid=uid();P.name='Épisode 1 · Le cerf-volant';
+let EPS=[{id:P.eid}];            /* liste des épisodes ; l'épisode ouvert vit dans P */
+const allEps=()=>EPS.map(e=>e.id===P.eid?{id:P.eid,name:P.name,scenes:P.scenes}:e);
+function blankScenes(){
+  const s={id:uid(),name:'Scène 1',bg:'parc',dur:0,lines:[{id:uid(),who:'Narrateur',text:'Il était une fois…',t:0,audio:null}],actors:[]};
+  autoTimes(s);return [s];
+}
 const UI={tab:'scene',t:0,playing:false,scene:0,actorId:null,pending:[],rec:null,confirmReset:false};
 const curScene=()=>P.scenes[clamp(UI.scene,0,P.scenes.length-1)];
 const curActor=()=>curScene().actors.find(a=>a.id===UI.actorId)||null;
@@ -490,27 +499,40 @@ const IDB={
   async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
   async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
 };
+const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:l.audio?{name:l.audio.name,ab:l.audio.ab,dur:l.audio.dur}:null}))}));
 function serialize(){
-  return{v:1,ex:1,custom:P.custom,voices:P.voices||{},scenes:P.scenes.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:l.audio?{name:l.audio.name,ab:l.audio.ab,dur:l.audio.dur}:null}))}))};
+  return{v:2,ex:1,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project',serialize());}catch(e){}},700);}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
+function decodeAll(eps){
+  for(const e of eps)for(const s of e.scenes)for(const l of s.lines)if(l.audio&&l.audio.ab){
+    const a=l.audio;ensureAudio();
+    AC.decodeAudioData(a.ab.slice(0)).then(b=>{a.buf=b;}).catch(()=>{l.audio=null;});
+  }
+}
 async function restore(){
   try{
+    const s2=await IDB.get('project2');
+    if(s2&&s2.v===2&&s2.episodes&&s2.episodes.length){
+      for(const id in s2.custom||{}){const c=s2.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
+      EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes}));
+      const cur=EPS.find(e=>e.id===s2.cur)||EPS[0];
+      P={v:1,eid:cur.id,name:cur.name,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
+      decodeAll(EPS);
+      return true;
+    }
     const saved=await IDB.get('project');
     if(saved&&saved.v===1&&saved.scenes&&saved.scenes.length){
       for(const id in saved.custom||{}){const c=saved.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
-      P={v:1,scenes:saved.scenes,custom:saved.custom||{},voices:saved.voices||{}};
+      P={v:1,eid:uid(),name:'Épisode 1 · Le cerf-volant',scenes:saved.scenes,custom:saved.custom||{},voices:saved.voices||{}};
       if(!saved.ex){ /* ancien épisode : on y ajoute les expressions de base */
         const D=defaultProject();
         D.scenes.forEach((ds,i)=>{const ss=P.scenes[i];if(!ss||ss.name!==ds.name)return;
           ds.actors.forEach((da,j)=>{const sa=ss.actors[j];if(!sa||sa.spr!==da.spr)return;
             da.acts.filter(c=>c.type==='expr').forEach(c=>sa.acts.push({...c,id:uid()}));});});
       }
-      for(const s of P.scenes)for(const l of s.lines)if(l.audio&&l.audio.ab){
-        const a=l.audio;ensureAudio();
-        AC.decodeAudioData(a.ab.slice(0)).then(b=>{a.buf=b;}).catch(()=>{l.audio=null;});
-      }
+      EPS=[{id:P.eid}];decodeAll([{scenes:P.scenes}]);
       return true;
     }
   }catch(e){}
@@ -534,7 +556,36 @@ function renderStrip(){
     P.scenes.splice(UI.scene+1,0,ns);scheduleSave();selectScene(UI.scene+1);}},'+ Scène'));
   const cur=s.querySelector('[aria-pressed="true"]');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'nearest',inline:'nearest'});
 }
-function renderPanels(){
+function loadEpisode(id){
+  const e=allEps().find(x=>x.id===id);if(!e)return;
+  pause();EPS=allEps();
+  P.eid=e.id;P.name=e.name;P.scenes=e.scenes;
+  UI.scene=0;UI.actorId=null;UI.t=startsOf()[0]+restLocal(P.scenes[0]);UI.confirmDelEp=false;
+  scheduleSave();renderPanels();draw();
+}
+function newEpisode(copyFrom){
+  const id=uid(),n=EPS.length+1;
+  let scenes,name;
+  if(copyFrom){
+    scenes=JSON.parse(JSON.stringify(P.scenes.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:null}))}))));
+    const nid=o=>{o.id=uid();return o;};
+    scenes.forEach(s=>{nid(s);s.lines.forEach(nid);s.actors.forEach(a=>{nid(a);a.acts.forEach(nid);});});
+    name=P.name+' (copie)';
+  }else{scenes=blankScenes();name='Épisode '+n;}
+  EPS=allEps();EPS.push({id,name,scenes});
+  loadEpisode(id);
+}
+function delEpisode(){
+  if(EPS.length<2)return;
+  const rest=allEps().filter(e=>e.id!==P.eid);EPS=rest;
+  loadEpisode(rest[0].id);
+}
+function renderEpbar(){
+  const bar=$('#epbar');if(!bar)return;bar.textContent='';
+  bar.append(selectEl(allEps().map(e=>[e.id,e.name||'Épisode']),P.eid,loadEpisode),
+    el('button',{class:'btn sm',type:'button',onclick:()=>newEpisode(false)},'+ Épisode'));
+}
+function renderPanels(){renderEpbar();
   document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===UI.tab)));
   $('#body').setAttribute('aria-labelledby','tab-'+UI.tab);
   renderStrip();renderBody();
@@ -927,6 +978,15 @@ function tabExport(b){
       UI.rec?el('button',{class:'btn danger',type:'button',onclick:()=>{UI.rec.cancel=true;pause();}},'Annuler'):null),
     el('div',{class:'bar','aria-hidden':'true'},el('i',{id:'recbar'})),
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
+    el('div',{class:'card'},
+      el('h3',{text:'Épisodes'}),
+      el('label',{class:'fld'},el('span',{text:'Nom de l\'épisode'}),(()=>{const i=el('input',{type:'text',value:P.name||''});i.addEventListener('input',()=>{P.name=i.value;scheduleSave();renderEpbar();});return i;})()),
+      el('div',{class:'row'},
+        el('button',{class:'btn sm',type:'button',onclick:()=>newEpisode(false)},'Nouvel épisode vide'),
+        el('button',{class:'btn sm',type:'button',onclick:()=>newEpisode(true)},'Dupliquer (sans les voix)'),
+        el('button',{class:'btn sm danger',type:'button',disabled:EPS.length<2,onclick:()=>{
+          if(!UI.confirmDelEp){UI.confirmDelEp=true;renderBody();return;}
+          UI.confirmDelEp=false;delEpisode();}},UI.confirmDelEp?'Confirmer la suppression':'Supprimer cet épisode'))),
     el('h3',{text:'Voix'}),
     el('p',{class:'hint',text:'Génère chaque réplique dans ElevenLabs, nomme les fichiers L1, L2, L3… dans l\'ordre de la scène, puis charge-les dans l\'onglet Voix. Les temps de la scène se recalculent avec la vraie durée des audios.'}),
     el('div',{class:'card'},
@@ -934,7 +994,7 @@ function tabExport(b){
       el('p',{class:'hint',text:'Efface tes modifications et les audios chargés. Les pièces importées restent dans la bibliothèque.'}),
       el('button',{class:'btn danger',type:'button',onclick:()=>{
         if(!UI.confirmReset){UI.confirmReset=true;renderBody();return;}
-        UI.confirmReset=false;pause();const custom=P.custom,voices=P.voices;P=defaultProject();P.custom=custom;P.voices=voices||{};UI.scene=0;UI.t=0;scheduleSave();renderPanels();draw();toast('Épisode remis à zéro.');}},
+        UI.confirmReset=false;pause();const custom=P.custom,voices=P.voices,eid=P.eid,nm=P.name;P=defaultProject();P.custom=custom;P.voices=voices||{};P.eid=eid;P.name=nm;UI.scene=0;UI.t=0;scheduleSave();renderPanels();draw();toast('Épisode remis à zéro.');}},
         UI.confirmReset?'Confirmer : tout effacer':'Remettre à zéro'))
   );
 }
