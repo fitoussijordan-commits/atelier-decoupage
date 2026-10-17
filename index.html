@@ -572,7 +572,7 @@ const IDB={
   async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
   async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
 };
-const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur}:null;
+const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v}:null;
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
   return{v:2,ex:1,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,scenes:serScenes(e.scenes)}))};
@@ -816,12 +816,12 @@ async function syncAudio(){
     for(const s of P.scenes){
       for(const it of [...s.lines.map(l=>[l,'voice']),...(s.sfx||[]).map(x=>[x,'sfx'])]){
         const [o,kind]=it,k=o.key||byTxt[kind+'|'+o.text],m=k&&man.items[k];
-        if(!m||o.audio||m.kind!==kind||(kind==='voice'&&m.text!==o.text)||(kind==='sfx'&&m.text!==o.text))continue;
+        if(!m||(o.audio&&(o.audio.v===undefined?kind==='sfx':o.audio.v===m.v))||m.kind!==kind||(kind==='voice'&&m.text!==o.text)||(kind==='sfx'&&m.text!==o.text))continue;
         const a=await fetch('/api/audio?ep='+encodeURIComponent(ep)+'&key='+encodeURIComponent(k),{headers:apiHeaders()});
         if(!a.ok)continue;
         const ab=await a.arrayBuffer();ensureAudio();
         const buf=await AC.decodeAudioData(ab.slice(0));
-        o.audio={name:kind==='voice'?'ElevenLabs · '+o.who:'Bruitage ElevenLabs',ab,buf,dur:buf.duration};n++;
+        o.audio={name:kind==='voice'?'ElevenLabs · '+o.who:'Bruitage ElevenLabs',ab,buf,dur:buf.duration,v:m.v};n++;
       }
       if(n&&s.lines.every(l=>l.audio))autoTimes(s);
     }

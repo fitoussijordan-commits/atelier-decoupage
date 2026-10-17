@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     const m = await readManifest(ep);
     if (!key) {
       const items = {};
-      for (const k in m.items) items[k] = { text: m.items[k].text, kind: m.items[k].kind };
+      for (const k in m.items) items[k] = { text: m.items[k].text, kind: m.items[k].kind, v: m.items[k].voice || '' };
       res.setHeader('Cache-Control', 'no-store');
       return res.status(200).json({ voices: m.voices || {}, items });
     }
