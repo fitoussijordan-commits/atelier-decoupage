@@ -183,6 +183,7 @@ const PROPS={
  'buisson':{w:300,h:190,base:150,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><g stroke="#24602c" stroke-width="5"><ellipse cx="80" cy="125" rx="74" ry="58" fill="#3f9e4d"/><ellipse cx="172" cy="98" rx="92" ry="82" fill="#4aae58"/><ellipse cx="242" cy="128" rx="55" ry="52" fill="#3f9e4d"/></g><g fill="#ff7aa2"><circle cx="70" cy="110" r="7"/><circle cx="190" cy="80" r="7"/><circle cx="238" cy="120" r="7"/></g></svg>`},
  'banc':{w:300,h:170,base:130,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 170"><g stroke="#6b4423" stroke-width="5" stroke-linejoin="round"><rect x="40" y="108" width="22" height="56" fill="#9a6a3a"/><rect x="238" y="108" width="22" height="56" fill="#9a6a3a"/><rect x="20" y="18" width="260" height="42" rx="8" fill="#cc9154"/><rect x="20" y="70" width="260" height="38" rx="8" fill="#bd7d3d"/></g></svg>`},
  'arbre':{w:260,h:380,base:330,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 380"><g stroke="#2c6a35" stroke-width="5"><rect x="105" y="190" width="50" height="185" fill="#9a6a3a" stroke="#6b4423"/><ellipse cx="130" cy="120" rx="118" ry="112" fill="#4aa65a"/><ellipse cx="70" cy="150" rx="60" ry="55" fill="#52b062"/><ellipse cx="195" cy="145" rx="58" ry="52" fill="#52b062"/></g></svg>`},
+ 'veilleuse':{w:240,h:260,base:210,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260"><defs><radialGradient id="r"><stop offset="0" stop-color="#ffe98a" stop-opacity=".85"/><stop offset="1" stop-color="#ffe98a" stop-opacity="0"/></radialGradient></defs><circle cx="120" cy="120" r="118" fill="url(#r)"/><g ${OL}><rect x="92" y="212" width="56" height="34" rx="6" fill="#9a6a3a"/><rect x="112" y="150" width="16" height="64" fill="#9a6a3a"/><path d="M78 150L92 78H148L162 150Z" fill="#ffd84a"/></g></svg>`},
  'nappe':{w:380,h:120,base:80,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 120"><g stroke="#7a2b30" stroke-width="5" stroke-linejoin="round"><polygon points="44,16 336,16 378,104 2,104" fill="#e0525c"/></g><path d="M112 16L92 104M190 16V104M268 16L288 104M24 60H356" stroke="#fff" stroke-width="10" opacity=".85" fill="none"/></svg>`}
 };
 for(const k in PROPS){const p=PROPS[k];addSprite('objets/'+k,svgURI(p.svg),p.w,p.h,{base:p.base});}
@@ -241,11 +242,17 @@ const cloud=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="#fff
 const flowers=(pts,cols)=>pts.map((p,i)=>`<g transform="translate(${p[0]} ${p[1]})"><circle r="9" fill="${cols[i%cols.length]}"/><circle r="3.5" fill="#ffe27a"/></g>`).join('');
 const wrapBG=b=>svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">${b}</svg>`);
 const FL=[[120,590],[210,640],[1130,600],[1190,670],[980,690],[60,680],[430,700],[800,705]];
+const CHAMBRE=dark=>`<rect width="1280" height="720" fill="#d9c6ef"/><rect y="440" width="1280" height="280" fill="#c9935c"/>`+Array.from({length:9},(_,i)=>`<path d="M0 ${470+i*30}H1280" stroke="#a9743f" stroke-width="3"/>`).join('')+`<rect y="428" width="1280" height="16" fill="#fff"/><rect x="500" y="80" width="280" height="250" rx="8" fill="#fff" stroke="#b9a5d6" stroke-width="6"/><rect x="516" y="96" width="248" height="218" fill="#27336b"/><circle cx="690" cy="150" r="30" fill="#fff1b8"/><circle cx="560" cy="140" r="3" fill="#fff"/><circle cx="600" cy="200" r="3" fill="#fff"/><circle cx="730" cy="240" r="3" fill="#fff"/><path d="M640 96V314M516 205H764" stroke="#fff" stroke-width="8"/><rect x="470" y="70" width="60" height="280" fill="#ff8fb0"/><rect x="750" y="70" width="60" height="280" fill="#ff8fb0"/>`+
+ [[20,'#4aa3ff'],[860,'#ff7aa2']].map(([x,c])=>`<g stroke="#5a3a1a" stroke-width="5" stroke-linejoin="round"><rect x="${x}" y="330" width="40" height="210" fill="#8a5a2b"/><rect x="${x+20}" y="400" width="380" height="120" rx="10" fill="#9a6a3a"/><rect x="${x+40}" y="370" width="340" height="80" rx="14" fill="#fff"/><rect x="${x+90}" y="400" width="290" height="100" rx="14" fill="${c}"/><ellipse cx="${x+90}" cy="388" rx="46" ry="22" fill="#fff"/></g>`).join('')+
+ `<ellipse cx="640" cy="640" rx="260" ry="46" fill="#e57373" opacity=".8"/><ellipse cx="640" cy="640" rx="190" ry="30" fill="#ffb3b3" opacity=".8"/>`+(dark?`<rect width="1280" height="720" fill="#0e1446" opacity=".58"/>`:'');
 const BGS={
  parc:{name:'Parc',src:wrapBG(sky('#8fd4f2')+`<circle cx="1090" cy="120" r="62" fill="#ffd84a"/>`+cloud(260,120,1.1)+cloud(720,80,.8)+cloud(980,240,.7)+`<ellipse cx="300" cy="500" rx="520" ry="150" fill="#8fd16c"/><ellipse cx="1010" cy="510" rx="480" ry="140" fill="#7cc65b"/><rect y="480" width="1280" height="240" fill="#6dbf4b"/><rect y="700" width="1280" height="20" fill="#5fae40"/><path d="M520 720C560 640 620 580 700 520C740 490 780 480 820 480L860 480C800 520 760 560 740 600C720 650 720 690 740 720Z" fill="#ecdca8"/>`+flowers(FL,['#ff7aa2','#ffffff','#ffb347']))},
  maison:{name:'Maison',src:wrapBG(sky('#9ad8f5')+`<circle cx="1120" cy="110" r="58" fill="#ffd84a"/>`+cloud(760,110,.9)+cloud(1010,260,.6)+`<ellipse cx="900" cy="500" rx="520" ry="130" fill="#93d36f"/><rect y="480" width="1280" height="240" fill="#6dbf4b"/><rect y="700" width="1280" height="20" fill="#5fae40"/>`+Array.from({length:11},(_,i)=>`<rect x="${580+i*66}" y="452" width="40" height="96" rx="6" fill="#fff" stroke="#b9c1cc" stroke-width="4"/>`).join('')+`<rect x="560" y="486" width="720" height="14" fill="#fff" stroke="#b9c1cc" stroke-width="4"/><rect x="560" y="520" width="720" height="14" fill="#fff" stroke="#b9c1cc" stroke-width="4"/><rect x="130" y="250" width="400" height="260" fill="#f6e3b4" stroke="#8a6d3b" stroke-width="6"/><polygon points="96,260 330,100 564,260" fill="#c9553d" stroke="#8a2f22" stroke-width="6" stroke-linejoin="round"/><rect x="290" y="350" width="92" height="160" rx="6" fill="#7b4b2a" stroke="#4d2c16" stroke-width="5"/><circle cx="366" cy="432" r="6" fill="#ffd84a"/><rect x="160" y="310" width="84" height="74" fill="#a8dcf5" stroke="#8a6d3b" stroke-width="5"/><path d="M202 310V384M160 347H244" stroke="#8a6d3b" stroke-width="4"/><rect x="418" y="310" width="84" height="74" fill="#a8dcf5" stroke="#8a6d3b" stroke-width="5"/><path d="M460 310V384M418 347H502" stroke="#8a6d3b" stroke-width="4"/><path d="M300 720C320 640 330 580 336 510L370 510C376 580 388 650 410 720Z" fill="#ecdca8"/>`+flowers([[90,600],[540,650],[1130,640],[1200,690],[40,690]],['#ff7aa2','#fff','#ffb347']))},
  prairie:{name:'Prairie',src:wrapBG(sky('#a0defa')+`<circle cx="180" cy="130" r="56" fill="#ffd84a"/>`+cloud(520,110,1)+cloud(900,170,.8)+cloud(1150,70,.6)+`<ellipse cx="260" cy="470" rx="560" ry="150" fill="#b8e48d"/><ellipse cx="980" cy="480" rx="520" ry="140" fill="#9bd36b"/><ellipse cx="640" cy="560" rx="900" ry="140" fill="#7fc656"/><rect y="520" width="1280" height="200" fill="#6dbf4b"/><rect y="700" width="1280" height="20" fill="#5fae40"/>`+flowers([[100,560],[250,610],[420,690],[620,560],[760,700],[930,590],[1110,640],[1220,700],[60,690],[560,640],[1040,700]],['#ff7aa2','#fff','#ffb347','#c58bff']))},
- soir:{name:'Soir',src:wrapBG(sky('#ffb98a')+`<circle cx="220" cy="470" r="90" fill="#ffe3a0"/><rect y="0" width="1280" height="260" fill="#ff9d7d" opacity=".5"/>`+cloud(700,120,1)+cloud(1050,200,.7)+`<ellipse cx="300" cy="520" rx="560" ry="140" fill="#6aa86a"/><ellipse cx="1000" cy="530" rx="520" ry="130" fill="#5b9a5d"/><rect y="520" width="1280" height="200" fill="#4f8d52"/><rect y="700" width="1280" height="20" fill="#447c47"/>`)}
+ soir:{name:'Soir',src:wrapBG(sky('#ffb98a')+`<circle cx="220" cy="470" r="90" fill="#ffe3a0"/><rect y="0" width="1280" height="260" fill="#ff9d7d" opacity=".5"/>`+cloud(700,120,1)+cloud(1050,200,.7)+`<ellipse cx="300" cy="520" rx="560" ry="140" fill="#6aa86a"/><ellipse cx="1000" cy="530" rx="520" ry="130" fill="#5b9a5d"/><rect y="520" width="1280" height="200" fill="#4f8d52"/><rect y="700" width="1280" height="20" fill="#447c47"/>`)},
+ nuit:{name:'Nuit',src:wrapBG(`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141c4a"/><stop offset="1" stop-color="#46549c"/></linearGradient></defs><rect width="1280" height="720" fill="url(#g)"/>`+Array.from({length:70},(_,i)=>`<circle cx="${(i*197+53)%1280}" cy="${(i*89+31)%380}" r="${1.3+(i%3)*.8}" fill="#fff" opacity="${.55+(i%4)*.12}"/>`).join('')+`<circle cx="1090" cy="120" r="58" fill="#fff1b8"/><circle cx="1070" cy="104" r="10" fill="#f0dc9a"/><circle cx="1112" cy="140" r="7" fill="#f0dc9a"/><circle cx="1100" cy="94" r="5" fill="#f0dc9a"/><ellipse cx="260" cy="500" rx="540" ry="150" fill="#2d5d6a"/><ellipse cx="1010" cy="510" rx="500" ry="140" fill="#26525e"/><rect y="480" width="1280" height="240" fill="#1f4750"/><rect y="700" width="1280" height="20" fill="#173a42"/><path d="M520 720C560 640 620 580 700 520C740 490 780 480 820 480L860 480C800 520 760 560 740 600C720 650 720 690 740 720Z" fill="#6f7ca6" opacity=".55"/><rect x="90" y="330" width="230" height="170" fill="#1b2447"/><polygon points="70,340 205,230 340,340" fill="#141b3b"/><rect x="140" y="390" width="50" height="50" fill="#ffd84a"/><rect x="230" y="390" width="50" height="50" fill="#ffd84a"/>`+[[300,600],[480,660],[1000,620],[1150,680],[760,690],[120,660]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#ffe27a" opacity=".9"/>`).join(''))},
+ chambre:{name:'Chambre',src:wrapBG(CHAMBRE(false))},
+ 'chambre-noire':{name:'Chambre (noir)',src:wrapBG(CHAMBRE(true))}
 };
 const BGIMG={};
 for(const k in BGS){const im=new Image();im.onload=()=>draw();im.src=BGS[k].src;BGIMG[k]=im;}
@@ -343,6 +350,63 @@ function blankScenes(){
   const s={id:uid(),name:'Scène 1',bg:'parc',dur:0,lines:[{id:uid(),who:'Narrateur',text:'Il était une fois…',t:0,audio:null}],actors:[]};
   autoTimes(s);return [s];
 }
+/* ---- Épisode 2 : « Roux a peur du noir » (inspiré d'un épisode de Franklin) ---- */
+function buildNuit(){
+  const mk=(name,bg,lines)=>{const s={id:uid(),name,bg,dur:0,lines:lines.map(([who,text])=>({id:uid(),who,text,t:0,audio:null})),actors:[]};autoTimes(s);return s;};
+  const A=(spr,x,y,s,acts,extra)=>Object.assign({id:uid(),spr,x,y,s,flip:false,z:0,acts:acts||[]},extra||{});
+  const o=(t,d,type,e)=>Object.assign({id:uid(),t:+t.toFixed(2),d,type},e||{});
+  const X=(t,e)=>o(t,.1,'expr',{expr:e});
+  const sc=[];let s,L;
+  s=mk('La soirée pyjama','soir',[['Caramel','Roux, ce soir tu dors chez moi !'],['Roux',"Génial ! Moi, je n'ai peur de rien."],['Narrateur','Roux adorait dormir chez Caramel. Mais quand la nuit arrive…']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',400,GROUND,1,[o(0,1.4,'enter',{side:'left'}),X(L[1],'tres-content'),o(L[1],.7,'bounce'),X(L[2],'inquiet')]),
+            A('ourson/debout',880,GROUND,1,[X(0,'content'),o(L[0],.8,'bounce')])];sc.push(s);
+  s=mk('La nuit tombe','nuit',[['Narrateur',"Le soleil s'est couché. Le ciel est devenu tout noir."],['Roux','C’est… très noir, dehors.'],['Caramel',"C'est la nuit, Roux. C'est normal !"]]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',400,GROUND,1,[X(L[1],'inquiet'),o(L[1],.7,'shake')]),
+            A('ourson/debout',860,GROUND,1,[X(L[2],'content'),o(L[2],.8,'bounce')])];sc.push(s);
+  s=mk('Dans la chambre','chambre',[['Caramel','Voilà ma chambre ! Toi, tu prends le lit près de la fenêtre.'],['Roux',"Super… Et la lumière, on la laisse allumée ?"],['Caramel',"Allumée ? Mais on dort dans le noir, voyons !"]]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('ourson/debout',420,GROUND,1,[X(0,'content'),o(L[0],.8,'bounce'),X(L[2],'surpris')]),
+            A('renard/debout',880,GROUND,1,[X(L[1],'inquiet'),X(L[2],'effraye')],{flip:true})];sc.push(s);
+  s=mk('Dans le noir','chambre-noire',[['Narrateur',"Clic ! La lumière s'éteint. Tout devient noir."],['Roux',"Qu'est-ce que c'était, ce bruit ?!"],['Caramel','Le vieux plancher qui craque.'],['Roux','Et ces deux yeux, là-bas dans le coin ?'],['Caramel',"C'est mon doudou, Roux."]]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',880,GROUND,1,[X(L[1],'effraye'),o(L[1],.8,'shake'),X(L[3],'inquiet'),o(L[3],.8,'shake')],{flip:true}),
+            A('ourson/debout',420,GROUND,1,[X(L[2],'content'),X(L[4],'rit'),o(L[4],.8,'bounce')])];sc.push(s);
+  s=mk('La fuite','nuit',[['Narrateur',"Roux n'osait pas l'avouer. Il se faufila dehors, tout seul."],['Roux',"Je rentre chez moi… Il y a moins de noir, là-bas."],['Narrateur','Mais dehors, le noir était encore plus grand.'],['Olympe','Hou hou ! Qui va là ?'],['Roux','Aaaah !']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',240,GROUND,1,[X(0,'inquiet'),o(L[1],3,'walk',{x:720}),X(L[3],'effraye'),o(L[4],.8,'shake'),o(L[4],.8,'jump',{h:70})]),
+            A('chouette/debout',1010,GROUND,1,[o(L[3]-.2,1.2,'enter',{side:'right'}),X(L[3],'content')])];sc.push(s);
+  s=mk('Olympe','nuit',[['Olympe',"N'aie pas peur, Roux. C'est moi, Olympe."],['Roux',"Le noir me fait peur… et je n'osais pas le dire."],['Olympe','La nuit, c’est comme le jour, mais les couleurs dorment. Viens, regarde le ciel.']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',400,GROUND,1,[X(0,'effraye'),X(L[1],'triste')]),
+            A('chouette/debout',860,GROUND,1,[X(0,'content'),X(L[2],'content'),o(L[2],.1,'swap',{spr:'chouette/pointe'}),o(L[2],.8,'bounce')])];sc.push(s);
+  s=mk('Les étoiles','nuit',[['Roux','Waouh… Il y en a des milliers !'],['Olympe',"Sans le noir, on ne verrait jamais les étoiles."],['Roux',"J'ai encore un peu peur, mais c'est joli."],['Olympe','On peut avoir peur et être courageux en même temps.']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('renard/debout',430,GROUND,1,[X(0,'surpris'),o(L[0],.8,'bounce'),X(L[2],'content'),X(L[3],'tres-content'),o(L[3],.1,'swap',{spr:'renard/fier'})]),
+            A('chouette/debout',850,GROUND,1,[X(0,'content'),X(L[1],'reflechit'),X(L[3],'content'),o(L[3],.8,'bounce')])];sc.push(s);
+  s=mk("On t'a cherché",'chambre',[['Caramel',"Roux ! On t'a cherché partout !"],['Roux',"Pardon… J'avais peur du noir, et je n'ai pas osé le dire."],['Caramel','Moi aussi, parfois ! Regarde, j’ai une veilleuse.'],['Pistache','Une petite lumière, et le noir fait moins peur.'],['Roux','Merci ! Dire qu’on a peur, ça fait déjà moins peur !']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('objets/veilleuse',760,GROUND+30,1,[],{z:-50}),
+            A('ourson/debout',330,GROUND,1,[X(0,'surpris'),X(L[2],'content'),o(L[2],.8,'bounce')]),
+            A('renard/debout',620,GROUND,1,[X(L[1],'triste'),X(L[3],'content'),X(L[4],'tres-content'),o(L[4],.8,'bounce')]),
+            A('lapin/debout',1010,GROUND,1,[o(L[3],.8,'bounce')])];sc.push(s);
+  s=mk('Bonne nuit','chambre-noire',[['Narrateur',"Cette nuit-là, Roux s'endormit avec une petite lumière…"],['Narrateur','…et le cœur léger. Bonne nuit !']]);
+  L=s.lines.map(l=>l.t);
+  s.actors=[A('objets/veilleuse',760,GROUND+30,1,[],{z:-50}),
+            A('ourson/debout',380,GROUND,1,[X(0,'content')]),
+            A('renard/assis',600,GROUND-20,1,[X(L[1]-.3,'endormi'),o(L[1],2.5,'wobble')])];sc.push(s);
+  return sc;
+}
+const TEMPLATES={nuit:{name:'Épisode 2 · Roux a peur du noir',build:buildNuit}};
+let SEEDED=[];
+function seedEpisodes(){
+  for(const k in TEMPLATES){
+    if(SEEDED.includes(k))continue;
+    SEEDED.push(k);EPS=allEps();EPS.push({id:uid(),name:TEMPLATES[k].name,scenes:TEMPLATES[k].build()});
+  }
+}
+
 const UI={tab:'scene',t:0,playing:false,scene:0,actorId:null,pending:[],rec:null,confirmReset:false};
 const curScene=()=>P.scenes[clamp(UI.scene,0,P.scenes.length-1)];
 const curActor=()=>curScene().actors.find(a=>a.id===UI.actorId)||null;
@@ -501,7 +565,7 @@ const IDB={
 };
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:l.audio?{name:l.audio.name,ab:l.audio.ab,dur:l.audio.dur}:null}))}));
 function serialize(){
-  return{v:2,ex:1,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,scenes:serScenes(e.scenes)}))};
+  return{v:2,ex:1,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
@@ -516,6 +580,7 @@ async function restore(){
     const s2=await IDB.get('project2');
     if(s2&&s2.v===2&&s2.episodes&&s2.episodes.length){
       for(const id in s2.custom||{}){const c=s2.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
+      SEEDED=s2.seeded||[];
       EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes}));
       const cur=EPS.find(e=>e.id===s2.cur)||EPS[0];
       P={v:1,eid:cur.id,name:cur.name,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
@@ -1073,7 +1138,7 @@ $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.va
 setPlayIcon();
 const fontsReady=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('600 36px "Baloo 2"'),document.fonts.load('400 16px Nunito')]).catch(()=>{}):Promise.resolve();
 (async()=>{
-  await restore();initVoices();
+  await restore();seedEpisodes();scheduleSave();initVoices();
   UI.scene=0;UI.t=startsOf()[0]+restLocal(P.scenes[0]);
   renderPanels();draw();
   fontsReady.then(()=>draw());
