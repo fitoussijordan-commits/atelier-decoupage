@@ -364,19 +364,19 @@ function buildNuit(){
   s=mk('La nuit tombe','nuit',[['Narrateur',"Le soleil s'est couché. Le ciel est devenu tout noir."],['Roux','C’est… très noir, dehors.'],['Caramel',"C'est la nuit, Roux. C'est normal !"]]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('renard/debout',400,GROUND,1,[X(L[1],'inquiet'),o(L[1],.7,'shake')]),
-            A('ourson/debout',860,GROUND,1,[X(L[2],'content'),o(L[2],.8,'bounce')])];sc.push(s);
+            A('ourson/debout',860,GROUND,1,[X(L[2],'content'),o(L[2],.8,'bounce')])];s.sfx=[{id:uid(),t:0.3,text:'crickets chirping at night, calm countryside ambience',dur:8,vol:.6,audio:null}];sc.push(s);
   s=mk('Dans la chambre','chambre',[['Caramel','Voilà ma chambre ! Toi, tu prends le lit près de la fenêtre.'],['Roux',"Super… Et la lumière, on la laisse allumée ?"],['Caramel',"Allumée ? Mais on dort dans le noir, voyons !"]]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('ourson/debout',420,GROUND,1,[X(0,'content'),o(L[0],.8,'bounce'),X(L[2],'surpris')]),
-            A('renard/debout',880,GROUND,1,[X(L[1],'inquiet'),X(L[2],'effraye')],{flip:true})];sc.push(s);
+            A('renard/debout',880,GROUND,1,[X(L[1],'inquiet'),X(L[2],'effraye')],{flip:true})];s.sfx=[{id:uid(),t:0.2,text:'child walking on a creaky wooden floor in a bedroom',dur:3,vol:.6,audio:null}];sc.push(s);
   s=mk('Dans le noir','chambre-noire',[['Narrateur',"Clic ! La lumière s'éteint. Tout devient noir."],['Roux',"Qu'est-ce que c'était, ce bruit ?!"],['Caramel','Le vieux plancher qui craque.'],['Roux','Et ces deux yeux, là-bas dans le coin ?'],['Caramel',"C'est mon doudou, Roux."]]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('renard/debout',880,GROUND,1,[X(L[1],'effraye'),o(L[1],.8,'shake'),X(L[3],'inquiet'),o(L[3],.8,'shake')],{flip:true}),
-            A('ourson/debout',420,GROUND,1,[X(L[2],'content'),X(L[4],'rit'),o(L[4],.8,'bounce')])];sc.push(s);
+            A('ourson/debout',420,GROUND,1,[X(L[2],'content'),X(L[4],'rit'),o(L[4],.8,'bounce')])];s.sfx=[{id:uid(),t:L[0],text:'light switch click in a quiet room',dur:1,vol:.6,audio:null},{id:uid(),t:Math.max(0,L[1]-.6),text:'old wooden floor creaking in the dark, spooky',dur:2,vol:.6,audio:null},{id:uid(),t:L[4],text:'soft plush toy squeak, cartoon',dur:1,vol:.6,audio:null}];sc.push(s);
   s=mk('La fuite','nuit',[['Narrateur',"Roux n'osait pas l'avouer. Il se faufila dehors, tout seul."],['Roux',"Je rentre chez moi… Il y a moins de noir, là-bas."],['Narrateur','Mais dehors, le noir était encore plus grand.'],['Olympe','Hou hou ! Qui va là ?'],['Roux','Aaaah !']]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('renard/debout',240,GROUND,1,[X(0,'inquiet'),o(L[1],3,'walk',{x:720}),X(L[3],'effraye'),o(L[4],.8,'shake'),o(L[4],.8,'jump',{h:70})]),
-            A('chouette/debout',1010,GROUND,1,[o(L[3]-.2,1.2,'enter',{side:'right'}),X(L[3],'content')])];sc.push(s);
+            A('chouette/debout',1010,GROUND,1,[o(L[3]-.2,1.2,'enter',{side:'right'}),X(L[3],'content')])];s.sfx=[{id:uid(),t:0.3,text:'wind blowing at night with distant crickets',dur:8,vol:.6,audio:null},{id:uid(),t:Math.max(0,L[3]-.4),text:'owl hooting twice at night',dur:3,vol:.6,audio:null}];sc.push(s);
   s=mk('Olympe','nuit',[['Olympe',"N'aie pas peur, Roux. C'est moi, Olympe."],['Roux',"Le noir me fait peur… et je n'osais pas le dire."],['Olympe','La nuit, c’est comme le jour, mais les couleurs dorment. Viens, regarde le ciel.']]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('renard/debout',400,GROUND,1,[X(0,'effraye'),X(L[1],'triste')]),
@@ -384,7 +384,7 @@ function buildNuit(){
   s=mk('Les étoiles','nuit',[['Roux','Waouh… Il y en a des milliers !'],['Olympe',"Sans le noir, on ne verrait jamais les étoiles."],['Roux',"J'ai encore un peu peur, mais c'est joli."],['Olympe','On peut avoir peur et être courageux en même temps.']]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('renard/debout',430,GROUND,1,[X(0,'surpris'),o(L[0],.8,'bounce'),X(L[2],'content'),X(L[3],'tres-content'),o(L[3],.1,'swap',{spr:'renard/fier'})]),
-            A('chouette/debout',850,GROUND,1,[X(0,'content'),X(L[1],'reflechit'),X(L[3],'content'),o(L[3],.8,'bounce')])];sc.push(s);
+            A('chouette/debout',850,GROUND,1,[X(0,'content'),X(L[1],'reflechit'),X(L[3],'content'),o(L[3],.8,'bounce')])];s.sfx=[{id:uid(),t:0.2,text:'gentle night ambience, soft crickets and a light breeze',dur:10,vol:.6,audio:null}];sc.push(s);
   s=mk("On t'a cherché",'chambre',[['Caramel',"Roux ! On t'a cherché partout !"],['Roux',"Pardon… J'avais peur du noir, et je n'ai pas osé le dire."],['Caramel','Moi aussi, parfois ! Regarde, j’ai une veilleuse.'],['Pistache','Une petite lumière, et le noir fait moins peur.'],['Roux','Merci ! Dire qu’on a peur, ça fait déjà moins peur !']]);
   L=s.lines.map(l=>l.t);
   s.actors=[A('objets/veilleuse',760,GROUND+30,1,[],{z:-50}),
@@ -519,6 +519,13 @@ function scheduleAudio(from,dest){
     const src=AC.createBufferSource();src.buffer=l.audio.buf;src.connect(dest);
     src.start(AC.currentTime+Math.max(0,ls-from),Math.max(0,from-ls));live.push(src);
   }));
+  P.scenes.forEach((s,i)=>(s.sfx||[]).forEach(x=>{
+    if(!x.audio||!x.audio.buf)return;
+    const ls=st[i]+x.t,end=ls+x.audio.buf.duration;if(end<=from)return;
+    const src=AC.createBufferSource(),g=AC.createGain();g.gain.value=x.vol==null?.6:x.vol;
+    src.buffer=x.audio.buf;src.connect(g);g.connect(dest);
+    src.start(AC.currentTime+Math.max(0,ls-from),Math.max(0,from-ls));live.push(src);
+  }));
 }
 async function loadAudioFile(file){
   const ab=await file.arrayBuffer();ensureAudio();
@@ -563,14 +570,15 @@ const IDB={
   async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
   async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
 };
-const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:l.audio?{name:l.audio.name,ab:l.audio.ab,dur:l.audio.dur}:null}))}));
+const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur}:null;
+const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
   return{v:2,ex:1,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
 function decodeAll(eps){
-  for(const e of eps)for(const s of e.scenes)for(const l of s.lines)if(l.audio&&l.audio.ab){
+  for(const e of eps)for(const s of e.scenes)for(const l of [...s.lines,...(s.sfx||[])])if(l.audio&&l.audio.ab){
     const a=l.audio;ensureAudio();
     AC.decodeAudioData(a.ab.slice(0)).then(b=>{a.buf=b;}).catch(()=>{l.audio=null;});
   }
@@ -632,9 +640,9 @@ function newEpisode(copyFrom){
   const id=uid(),n=EPS.length+1;
   let scenes,name;
   if(copyFrom){
-    scenes=JSON.parse(JSON.stringify(P.scenes.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:null}))}))));
+    scenes=JSON.parse(JSON.stringify(P.scenes.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:null})),sfx:(s.sfx||[]).map(x=>({...x,audio:null}))}))));
     const nid=o=>{o.id=uid();return o;};
-    scenes.forEach(s=>{nid(s);s.lines.forEach(nid);s.actors.forEach(a=>{nid(a);a.acts.forEach(nid);});});
+    scenes.forEach(s=>{nid(s);s.lines.forEach(nid);(s.sfx||[]).forEach(nid);s.actors.forEach(a=>{nid(a);a.acts.forEach(nid);});});
     name=P.name+' (copie)';
   }else{scenes=blankScenes();name='Épisode '+n;}
   EPS=allEps();EPS.push({id,name,scenes});
@@ -696,7 +704,7 @@ function tabScene(b){
 function moveScene(d){const i=UI.scene,j=i+d;if(j<0||j>=P.scenes.length)return;[P.scenes[i],P.scenes[j]]=[P.scenes[j],P.scenes[i]];UI.scene=j;scheduleSave();renderPanels();draw();}
 function dupScene(){
   const c=JSON.parse(JSON.stringify(curScene(),(k,v)=>k==='audio'?undefined:v));
-  c.id=uid();c.name+=' (copie)';c.actors.forEach(a=>{a.id=uid();a.acts.forEach(x=>x.id=uid());});c.lines.forEach(l=>{l.id=uid();l.audio=null;});
+  c.id=uid();c.name+=' (copie)';c.actors.forEach(a=>{a.id=uid();a.acts.forEach(x=>x.id=uid());});c.lines.forEach(l=>{l.id=uid();l.audio=null;});(c.sfx||[]).forEach(x=>{x.id=uid();x.audio=null;});
   P.scenes.splice(UI.scene+1,0,c);scheduleSave();selectScene(UI.scene+1);
 }
 function delScene(){if(P.scenes.length<2)return;P.scenes.splice(UI.scene,1);UI.scene=Math.max(0,UI.scene-1);scheduleSave();selectScene(UI.scene);}
@@ -841,6 +849,41 @@ function tabVoices(b){
     el('button',{class:'btn',type:'button',onclick:()=>{autoTimes(s);scheduleSave();renderBody();draw();}},'Recalculer les temps'),
     el('button',{class:'btn',type:'button',onclick:()=>$('#fileAudioMulti').click()},'Charger plusieurs audios')));
   b.append(el('p',{class:'hint',text:'« Charger plusieurs audios » associe les fichiers aux répliques dans l\'ordre alphabétique de leurs noms (L1, L2, L3…), puis recalcule les temps.'}));
+  s.sfx=s.sfx||[];
+  b.append(el('h3',{text:'Bruitages de la scène'}),
+    el('p',{class:'hint',text:'Un bruitage = une description en anglais (c\'est ce que comprend le mieux ElevenLabs) placée à un instant précis. Il est mixé avec les voix et inclus dans la vidéo.'}));
+  s.sfx.forEach((x,i)=>b.append(sfxCard(s,x,i)));
+  b.append(el('div',{class:'row'},
+    el('button',{class:'btn',type:'button',onclick:()=>{s.sfx.push({id:uid(),t:+(UI.t-startsOf()[UI.scene]).toFixed(1)>0?+(UI.t-startsOf()[UI.scene]).toFixed(1):0,text:'',dur:0,vol:.6,audio:null});scheduleSave();renderBody();}},'+ Bruitage'),
+    VOICE.ok&&!VOICE.locked&&s.sfx.some(x=>x.text&&!x.audio)?el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const x of s.sfx)if(x.text&&!x.audio)await genSfx(x);}},'Générer ceux qui manquent'):null));
+}
+async function genSfx(x){
+  if(!(x.text||'').trim()){toast('Décris d\'abord le bruitage.');return;}
+  if(VOICE.busy)return;VOICE.busy=true;renderBody();
+  try{
+    ensureAudio();
+    const r=await fetch('/api/sfx',{method:'POST',headers:apiHeaders(),body:JSON.stringify({text:x.text,duration:x.dur||0})});
+    if(r.status===401){VOICE.locked=true;toast('Mot de passe refusé.');}
+    else if(!r.ok)toast('ElevenLabs a refusé la demande ('+r.status+').');
+    else{const ab=await r.arrayBuffer();const buf=await AC.decodeAudioData(ab.slice(0));x.audio={name:'Bruitage ElevenLabs',ab,buf,dur:buf.duration};scheduleSave();toast('Bruitage généré.');}
+  }catch(e){toast('Erreur pendant la génération du bruitage.');}
+  VOICE.busy=false;renderBody();draw();
+}
+function sfxCard(s,x,i){
+  const ta=el('input',{type:'text',placeholder:'ex. wooden floor creaking, owl hooting…',value:x.text||''});
+  ta.addEventListener('input',()=>{x.text=ta.value;scheduleSave();});
+  return el('div',{class:'card'},
+    ta,
+    el('div',{class:'grid3'},
+      el('label',{class:'fld'},el('span',{text:'Début (s)'}),numInput(x.t,0,300,.1,v=>{x.t=v;scheduleSave();})),
+      el('label',{class:'fld'},el('span',{text:'Durée (s, 0 = auto)'}),numInput(x.dur||0,0,30,.5,v=>{x.dur=v;scheduleSave();})),
+      el('label',{class:'fld'},el('span',{text:'Volume'}),numInput(x.vol==null?.6:x.vol,0,1,.1,v=>{x.vol=v;scheduleSave();}))),
+    el('div',{class:'audio'},
+      el('span',{class:'name',text:x.audio?`${x.audio.name} · ${x.audio.dur.toFixed(1)} s`:'Pas de son'}),
+      VOICE.ok&&!VOICE.locked?el('button',{class:'btn sm',type:'button',disabled:VOICE.busy,onclick:()=>genSfx(x)},x.audio?'Regénérer':'Générer'):null,
+      el('button',{class:'btn sm',type:'button',onclick:()=>{audioTarget=x;$('#fileAudioOne').click();}},x.audio?'Remplacer':'Charger un fichier'),
+      x.audio?el('button',{class:'btn sm',type:'button',onclick:()=>{ensureAudio();if(!x.audio.buf)return;const src=AC.createBufferSource(),g=AC.createGain();g.gain.value=x.vol==null?.6:x.vol;src.buffer=x.audio.buf;src.connect(g);g.connect(AC.destination);src.start();}},'Écouter'):null,
+      el('button',{class:'btn sm danger',type:'button',onclick:()=>{s.sfx.splice(i,1);scheduleSave();renderBody();}},'Supprimer')));
 }
 function lineCard(s,l,i){
   const ta=el('textarea',{rows:2});ta.value=l.text;
