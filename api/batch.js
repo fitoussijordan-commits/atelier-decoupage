@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
     const op = req.query.op;
     if (op === 'voices') {
       const r = await fetch(API + '/voices', { headers: { 'xi-api-key': key } });
-      if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status });
+      if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status, keyLen: String(key||'').length, body: (await r.text()).slice(0, 400) });
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
