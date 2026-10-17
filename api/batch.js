@@ -9,12 +9,12 @@ const API = 'https://api.elevenlabs.io/v1';
 module.exports = async (req, res) => {
   const key = process.env.ELEVENLABS_API_KEY, gen = process.env.GEN_TOKEN;
   if (!key || !gen) return res.status(500).json({ error: 'configuration manquante' });
-  if (req.query.token !== gen) return res.status(401).json({ error: 'token' });
+  if (req.query.token !== gen) return res.status(200).json({ error: 'token', gotLen: String(req.query.token || '').length, queryKeys: Object.keys(req.query || {}) });
   try {
     const op = req.query.op;
     if (op === 'voices') {
       const r = await fetch(API + '/voices', { headers: { 'xi-api-key': key } });
-      if (!r.ok) return res.status(r.status).json({ error: 'elevenlabs ' + r.status });
+      if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status });
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
