@@ -1,0 +1,212 @@
+{
+ "lines": [
+  {
+   "key": "s1l1",
+   "who": "Caramel",
+   "text": "Roux, ce soir tu dors chez moi !"
+  },
+  {
+   "key": "s1l2",
+   "who": "Roux",
+   "text": "Génial ! Moi, je n'ai peur de rien."
+  },
+  {
+   "key": "s1l3",
+   "who": "Narrateur",
+   "text": "Roux adorait dormir chez Caramel. Mais quand la nuit arrive…"
+  },
+  {
+   "key": "s2l1",
+   "who": "Narrateur",
+   "text": "Le soleil s'est couché. Le ciel est devenu tout noir."
+  },
+  {
+   "key": "s2l2",
+   "who": "Roux",
+   "text": "C’est… très noir, dehors."
+  },
+  {
+   "key": "s2l3",
+   "who": "Caramel",
+   "text": "C'est la nuit, Roux. C'est normal !"
+  },
+  {
+   "key": "s3l1",
+   "who": "Caramel",
+   "text": "Voilà ma chambre ! Toi, tu prends le lit près de la fenêtre."
+  },
+  {
+   "key": "s3l2",
+   "who": "Roux",
+   "text": "Super… Et la lumière, on la laisse allumée ?"
+  },
+  {
+   "key": "s3l3",
+   "who": "Caramel",
+   "text": "Allumée ? Mais on dort dans le noir, voyons !"
+  },
+  {
+   "key": "s4l1",
+   "who": "Narrateur",
+   "text": "Clic ! La lumière s'éteint. Tout devient noir."
+  },
+  {
+   "key": "s4l2",
+   "who": "Roux",
+   "text": "Qu'est-ce que c'était, ce bruit ?!"
+  },
+  {
+   "key": "s4l3",
+   "who": "Caramel",
+   "text": "Le vieux plancher qui craque."
+  },
+  {
+   "key": "s4l4",
+   "who": "Roux",
+   "text": "Et ces deux yeux, là-bas dans le coin ?"
+  },
+  {
+   "key": "s4l5",
+   "who": "Caramel",
+   "text": "C'est mon doudou, Roux."
+  },
+  {
+   "key": "s5l1",
+   "who": "Narrateur",
+   "text": "Roux n'osait pas l'avouer. Il se faufila dehors, tout seul."
+  },
+  {
+   "key": "s5l2",
+   "who": "Roux",
+   "text": "Je rentre chez moi… Il y a moins de noir, là-bas."
+  },
+  {
+   "key": "s5l3",
+   "who": "Narrateur",
+   "text": "Mais dehors, le noir était encore plus grand."
+  },
+  {
+   "key": "s5l4",
+   "who": "Olympe",
+   "text": "Hou hou ! Qui va là ?"
+  },
+  {
+   "key": "s5l5",
+   "who": "Roux",
+   "text": "Aaaah !"
+  },
+  {
+   "key": "s6l1",
+   "who": "Olympe",
+   "text": "N'aie pas peur, Roux. C'est moi, Olympe."
+  },
+  {
+   "key": "s6l2",
+   "who": "Roux",
+   "text": "Le noir me fait peur… et je n'osais pas le dire."
+  },
+  {
+   "key": "s6l3",
+   "who": "Olympe",
+   "text": "La nuit, c’est comme le jour, mais les couleurs dorment. Viens, regarde le ciel."
+  },
+  {
+   "key": "s7l1",
+   "who": "Roux",
+   "text": "Waouh… Il y en a des milliers !"
+  },
+  {
+   "key": "s7l2",
+   "who": "Olympe",
+   "text": "Sans le noir, on ne verrait jamais les étoiles."
+  },
+  {
+   "key": "s7l3",
+   "who": "Roux",
+   "text": "J'ai encore un peu peur, mais c'est joli."
+  },
+  {
+   "key": "s7l4",
+   "who": "Olympe",
+   "text": "On peut avoir peur et être courageux en même temps."
+  },
+  {
+   "key": "s8l1",
+   "who": "Caramel",
+   "text": "Roux ! On t'a cherché partout !"
+  },
+  {
+   "key": "s8l2",
+   "who": "Roux",
+   "text": "Pardon… J'avais peur du noir, et je n'ai pas osé le dire."
+  },
+  {
+   "key": "s8l3",
+   "who": "Caramel",
+   "text": "Moi aussi, parfois ! Regarde, j’ai une veilleuse."
+  },
+  {
+   "key": "s8l4",
+   "who": "Pistache",
+   "text": "Une petite lumière, et le noir fait moins peur."
+  },
+  {
+   "key": "s8l5",
+   "who": "Roux",
+   "text": "Merci ! Dire qu’on a peur, ça fait déjà moins peur !"
+  },
+  {
+   "key": "s9l1",
+   "who": "Narrateur",
+   "text": "Cette nuit-là, Roux s'endormit avec une petite lumière…"
+  },
+  {
+   "key": "s9l2",
+   "who": "Narrateur",
+   "text": "…et le cœur léger. Bonne nuit !"
+  }
+ ],
+ "sfx": [
+  {
+   "key": "s2x1",
+   "text": "crickets chirping at night, calm countryside ambience",
+   "dur": 8
+  },
+  {
+   "key": "s3x1",
+   "text": "child walking on a creaky wooden floor in a bedroom",
+   "dur": 3
+  },
+  {
+   "key": "s4x1",
+   "text": "light switch click in a quiet room",
+   "dur": 1
+  },
+  {
+   "key": "s4x2",
+   "text": "old wooden floor creaking in the dark, spooky",
+   "dur": 2
+  },
+  {
+   "key": "s4x3",
+   "text": "soft plush toy squeak, cartoon",
+   "dur": 1
+  },
+  {
+   "key": "s5x1",
+   "text": "wind blowing at night with distant crickets",
+   "dur": 8
+  },
+  {
+   "key": "s5x2",
+   "text": "owl hooting twice at night",
+   "dur": 3
+  },
+  {
+   "key": "s7x1",
+   "text": "gentle night ambience, soft crickets and a light breeze",
+   "dur": 10
+  }
+ ],
+ "voices": {}
+}

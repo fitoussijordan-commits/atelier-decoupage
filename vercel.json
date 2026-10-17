@@ -1,0 +1,1 @@
+{ "functions": { "api/batch.js": { "maxDuration": 60 }, "api/audio.js": { "maxDuration": 30 } } }
