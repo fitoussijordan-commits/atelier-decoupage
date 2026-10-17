@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
     if (op === 'library') {
-      const q = new URLSearchParams({ page_size: '30', language: 'fr', sort: 'usage_character_count_7d' });
+      const q = new URLSearchParams({ page_size: '30', language: 'fr', sort: 'trending' });
       for (const k of ['search', 'age', 'gender', 'category', 'use_cases', 'descriptives']) if (req.query[k]) q.set(k, req.query[k]);
       const r = await fetch(API + '/shared-voices?' + q, { headers: { 'xi-api-key': key } });
       if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status, body: (await r.text()).slice(0, 300) });
