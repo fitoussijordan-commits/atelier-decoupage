@@ -803,18 +803,19 @@ async function initVoices(){
 /* Sons préparés par Claude côté serveur : on récupère ceux qui manquent pour l'épisode ouvert */
 let syncing=false;
 async function syncAudio(){
-  if(syncing||!VOICE.ok||VOICE.locked||!P.tpl)return;
+  if(syncing)return;
   syncing=true;
   try{
-    const ep=P.tpl,r=await fetch('/api/audio?ep='+encodeURIComponent(ep),{headers:apiHeaders()});
+    const ep=P.tpl||'nuit',r=await fetch('/api/audio?ep='+encodeURIComponent(ep),{headers:apiHeaders()});
     if(!r.ok)return;
     const man=await r.json();
     P.voices=P.voices||{};let nv=false;
     for(const w in man.voices||{})if(!P.voices[w]){P.voices[w]=man.voices[w];nv=true;}
     let n=0;
+    const byTxt={};for(const k in man.items){const m=man.items[k];byTxt[m.kind+'|'+m.text]=k;}
     for(const s of P.scenes){
       for(const it of [...s.lines.map(l=>[l,'voice']),...(s.sfx||[]).map(x=>[x,'sfx'])]){
-        const [o,kind]=it,k=o.key,m=k&&man.items[k];
+        const [o,kind]=it,k=o.key||byTxt[kind+'|'+o.text],m=k&&man.items[k];
         if(!m||o.audio||m.kind!==kind||(kind==='voice'&&m.text!==o.text)||(kind==='sfx'&&m.text!==o.text))continue;
         const a=await fetch('/api/audio?ep='+encodeURIComponent(ep)+'&key='+encodeURIComponent(k),{headers:apiHeaders()});
         if(!a.ok)continue;

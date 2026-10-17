@@ -4,7 +4,6 @@
 const { checkPassword, okEp, readManifest } = require('../lib/common');
 
 module.exports = async (req, res) => {
-  if (!checkPassword(req, res)) return;
   try {
     const ep = req.query.ep, key = req.query.key;
     if (!okEp(ep)) return res.status(400).json({ error: 'épisode invalide' });
