@@ -3,7 +3,7 @@
 //   GET /api/batch?token=GEN_TOKEN&ep=nuit&op=status    -> ce qui reste à générer
 //   GET /api/batch?token=GEN_TOKEN&ep=nuit&op=run&limit=5 -> génère jusqu'à 5 sons manquants
 const { okEp, readManifest, writeManifest, put } = require('../lib/common');
-const EPISODES = { nuit: require('../episodes/nuit.json') };
+const EPISODES = { nuit: require('../episodes/nuit.json'), cerf: require('../episodes/cerf.json') };
 const API = 'https://api.elevenlabs.io/v1';
 
 module.exports = async (req, res) => {
@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     m.voices = E.voices || {};
     const todo = [];
     for (const l of E.lines || []) { const it = m.items[l.key]; if (!it || it.text !== l.text || it.voice !== (E.voices || {})[l.who]) todo.push({ ...l, kind: 'voice' }); }
-    for (const x of E.sfx || []) { const it = m.items[x.key]; if (!it || it.text !== x.text || it.dur !== (x.dur || 0)) todo.push({ ...x, kind: 'sfx' }); }
+    for (const x of E.sfx || []) { const it = m.items[x.key]; if (!it || it.text !== x.text || it.dur !== (x.dur || 0) || !!it.loop !== !!x.loop) todo.push({ ...x, kind: 'sfx' }); }
     if (op === 'status') return res.status(200).json({ total: (E.lines || []).length + (E.sfx || []).length, remaining: todo.map(t => t.key) });
     if (op !== 'run') return res.status(400).json({ error: 'op inconnue' });
     const limit = Math.min(8, Math.max(1, Number(req.query.limit) || 4));
@@ -54,6 +54,7 @@ module.exports = async (req, res) => {
         } else {
           const payload = { text: t.text };
           if (t.dur > 0) payload.duration_seconds = Math.min(30, Math.max(0.5, t.dur));
+          if (t.loop) payload.loop = true;
           r = await fetch(`${API}/sound-generation?output_format=mp3_44100_128`, {
             method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
             body: JSON.stringify(payload)
@@ -62,7 +63,7 @@ module.exports = async (req, res) => {
         if (!r.ok) throw new Error('elevenlabs ' + r.status);
         const buf = Buffer.from(await r.arrayBuffer());
         const b = await put(`audio/${ep}/${t.key}.mp3`, buf, { access: 'public', contentType: 'audio/mpeg', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
-        m.items[t.key] = { url: b.url, text: t.text, kind: t.kind, voice: t.kind === 'voice' ? (E.voices || {})[t.who] : undefined, dur: t.kind === 'sfx' ? (t.dur || 0) : undefined };
+        m.items[t.key] = { url: b.url, text: t.text, kind: t.kind, voice: t.kind === 'voice' ? (E.voices || {})[t.who] : undefined, dur: t.kind === 'sfx' ? (t.dur || 0) : undefined, loop: t.kind === 'sfx' ? !!t.loop : undefined };
         done.push(t.key);
       } catch (e) { errors.push(t.key + ': ' + e.message); }
     }

@@ -168,44 +168,136 @@
  ],
  "sfx": [
   {
+   "key": "s1x1",
+   "text": "evening countryside ambience at dusk, birds settling, soft breeze",
+   "dur": 22,
+   "loop": true
+  },
+  {
    "key": "s2x1",
    "text": "crickets chirping at night, calm countryside ambience",
-   "dur": 8
+   "dur": 22,
+   "loop": true
   },
   {
    "key": "s3x1",
+   "text": "quiet cozy bedroom room tone at night, faint distant crickets outside",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s3x2",
    "text": "child walking on a creaky wooden floor in a bedroom",
-   "dur": 3
+   "dur": 3,
+   "loop": false
   },
   {
    "key": "s4x1",
-   "text": "light switch click in a quiet room",
-   "dur": 1
+   "text": "dark quiet bedroom room tone, low tense hum, faint clock ticking",
+   "dur": 22,
+   "loop": true
   },
   {
    "key": "s4x2",
-   "text": "old wooden floor creaking in the dark, spooky",
-   "dur": 2
+   "text": "light switch click in a quiet room",
+   "dur": 1,
+   "loop": false
   },
   {
    "key": "s4x3",
+   "text": "old wooden floor creaking in the dark, spooky",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s4x4",
    "text": "soft plush toy squeak, cartoon",
-   "dur": 1
+   "dur": 1,
+   "loop": false
   },
   {
    "key": "s5x1",
    "text": "wind blowing at night with distant crickets",
-   "dur": 8
+   "dur": 22,
+   "loop": true
   },
   {
    "key": "s5x2",
+   "text": "wooden door creaking open then closing softly",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s5x3",
+   "text": "quick footsteps on grass at night, cartoon",
+   "dur": 3,
+   "loop": false
+  },
+  {
+   "key": "s5x4",
    "text": "owl hooting twice at night",
-   "dur": 3
+   "dur": 3,
+   "loop": false
+  },
+  {
+   "key": "s6x1",
+   "text": "quiet night forest ambience, soft wind through trees, distant owl",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s6x2",
+   "text": "owl wings flapping and landing softly",
+   "dur": 1.5,
+   "loop": false
   },
   {
    "key": "s7x1",
    "text": "gentle night ambience, soft crickets and a light breeze",
-   "dur": 10
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s7x2",
+   "text": "soft dreamy lullaby, music box, calm and magical",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s7x3",
+   "text": "magical twinkling stars chime, soft and gentle",
+   "dur": 3,
+   "loop": false
+  },
+  {
+   "key": "s8x1",
+   "text": "calm night outside with soft crickets",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s8x2",
+   "text": "warm gentle lullaby, music box and soft strings, reassuring",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s8x3",
+   "text": "soft click of a small night light turning on",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "s9x1",
+   "text": "quiet bedroom at night, very soft breathing and faint crickets",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s9x2",
+   "text": "sleepy lullaby, music box, slowly fading, calm",
+   "dur": 22,
+   "loop": true
   }
  ],
  "voices": {

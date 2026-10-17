@@ -14,6 +14,7 @@ module.exports = async (req, res) => {
     if (!text || text.length > 450) return res.status(400).json({ error: 'texte invalide' });
     const payload = { text };
     if (duration > 0) payload.duration_seconds = Math.min(30, Math.max(0.5, duration));
+    if (body && body.loop) payload.loop = true;
     const r = await fetch('https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128', {
       method: 'POST',
       headers: { 'xi-api-key': key, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },

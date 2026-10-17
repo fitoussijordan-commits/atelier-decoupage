@@ -1,0 +1,232 @@
+{
+ "lines": [
+  {
+   "key": "s1l1",
+   "who": "Pistache",
+   "text": "Roux, tu veux jouer avec mon cerf-volant rouge ?"
+  },
+  {
+   "key": "s1l2",
+   "who": "Roux",
+   "text": "Oh oui !"
+  },
+  {
+   "key": "s1l3",
+   "who": "Pistache",
+   "text": "Fais bien attention, j'y tiens beaucoup."
+  },
+  {
+   "key": "s1l4",
+   "who": "Roux",
+   "text": "Promis !"
+  },
+  {
+   "key": "s2l1",
+   "who": "Caramel",
+   "text": "Waouh, il vole super haut !"
+  },
+  {
+   "key": "s2l2",
+   "who": "Roux",
+   "text": "Regarde, je cours plus vite que le vent !"
+  },
+  {
+   "key": "s3l1",
+   "who": "Narrateur",
+   "text": "Soudain, une grosse rafale de vent…"
+  },
+  {
+   "key": "s3l2",
+   "who": "Roux",
+   "text": "Oh non !"
+  },
+  {
+   "key": "s4l1",
+   "who": "Roux",
+   "text": "Personne ne doit le savoir…"
+  },
+  {
+   "key": "s4l2",
+   "who": "Caramel",
+   "text": "Tu es tout bizarre, Roux."
+  },
+  {
+   "key": "s4l3",
+   "who": "Roux",
+   "text": "Moi ? Non, non, ça va !"
+  },
+  {
+   "key": "s5l1",
+   "who": "Roux",
+   "text": "J'ai plus envie de jouer… J'ai mal au ventre."
+  },
+  {
+   "key": "s5l2",
+   "who": "Narrateur",
+   "text": "Plus Roux gardait son secret, plus il pesait lourd."
+  },
+  {
+   "key": "s6l1",
+   "who": "Olympe",
+   "text": "Tu as l'air préoccupé, Roux."
+  },
+  {
+   "key": "s6l2",
+   "who": "Roux",
+   "text": "J'ai fait une bêtise… mais j'ai peur."
+  },
+  {
+   "key": "s6l3",
+   "who": "Olympe",
+   "text": "Un secret, c'est comme un caillou dans la chaussure. Plus on marche, plus ça fait mal."
+  },
+  {
+   "key": "s7l1",
+   "who": "Roux",
+   "text": "Pistache… j'ai déchiré ton cerf-volant. Je suis vraiment désolé."
+  },
+  {
+   "key": "s7l2",
+   "who": "Pistache",
+   "text": "…Je suis triste. Mais merci de me l'avoir dit."
+  },
+  {
+   "key": "s8l1",
+   "who": "Caramel",
+   "text": "On peut le réparer ensemble !"
+  },
+  {
+   "key": "s8l2",
+   "who": "Olympe",
+   "text": "J'ai du ruban dans mon sac."
+  },
+  {
+   "key": "s8l3",
+   "who": "Roux",
+   "text": "Dire la vérité, ça fait peur… mais après, on se sent léger !"
+  }
+ ],
+ "sfx": [
+  {
+   "key": "s1x1",
+   "text": "cozy house interior, quiet room tone with faint birds outside a window",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s2x1",
+   "text": "sunny park ambience, birds chirping, light breeze in the trees, very soft",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s2x2",
+   "text": "quick footsteps running on grass, cartoon",
+   "dur": 3,
+   "loop": false
+  },
+  {
+   "key": "s2x3",
+   "text": "kite fabric flapping in the wind",
+   "dur": 6,
+   "loop": false
+  },
+  {
+   "key": "s3x1",
+   "text": "sunny park ambience, birds chirping, light breeze in the trees, very soft",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s3x2",
+   "text": "strong gust of wind whoosh",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s3x3",
+   "text": "fabric ripping tearing, cartoon",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "s4x1",
+   "text": "quiet park ambience, light breeze, a few distant birds, slightly tense",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s4x2",
+   "text": "leaves rustling in a bush",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s5x1",
+   "text": "melancholic quiet park, soft wind, very distant birds",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s5x2",
+   "text": "sad trombone wah wah wah, cartoon, short",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s6x1",
+   "text": "sunny park ambience, birds chirping, light breeze in the trees, very soft",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s6x2",
+   "text": "owl wings flapping and landing softly",
+   "dur": 1.5,
+   "loop": false
+  },
+  {
+   "key": "s7x1",
+   "text": "peaceful meadow ambience, gentle wind in tall grass, soft birds",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s8x1",
+   "text": "peaceful meadow ambience, gentle wind in tall grass, soft birds",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s8x2",
+   "text": "light cheerful acoustic ukulele melody, kids cartoon, happy ending",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "s8x3",
+   "text": "adhesive tape ripping off a roll",
+   "dur": 1.5,
+   "loop": false
+  },
+  {
+   "key": "s8x4",
+   "text": "happy cartoon sparkle jingle, short",
+   "dur": 2,
+   "loop": false
+  },
+  {
+   "key": "s8x5",
+   "text": "kite flying away whoosh with fabric flapping",
+   "dur": 3,
+   "loop": false
+  }
+ ],
+ "voices": {
+  "Roux": "Xgb3SR8idOHy8scGICeJ",
+  "Olympe": "ZYOBieLaunTiQrTrvNQq",
+  "Caramel": "5hs4q0PzlPQREPpq7uQ9",
+  "Pistache": "Yx2a8qp2EqI9c5i8MzBo",
+  "Narrateur": "vTGV06pygfwa2WhLDZFp"
+ }
+}

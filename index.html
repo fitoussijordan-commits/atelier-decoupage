@@ -278,6 +278,41 @@ function restLocal(s){
   return clamp(Math.max(m,.4),0,sceneDur(s)-.05);
 }
 
+
+/* Bruitages et ambiances : t en s dans la scène, ou ln/off = calé sur une réplique ; loop = ambiance en boucle sur toute la scène */
+function setSfx(sc,defs){
+  sc.forEach((s,i)=>{
+    s.sfx=(defs[i]||[]).map(d=>{
+      const x={id:uid(),t:d.t||0,text:d.text,dur:d.dur||0,vol:d.vol==null?(d.loop?.3:.6):d.vol,audio:null};
+      if(d.loop)x.loop=true;
+      if(d.ln!=null){x.ln=d.ln;x.off=d.off||0;x.t=Math.max(0,(s.lines[d.ln]?s.lines[d.ln].t:0)+(d.off||0));}
+      return x;
+    });
+  });
+}
+const PARK='sunny park ambience, birds chirping, light breeze in the trees, very soft';
+const MEADOW='peaceful meadow ambience, gentle wind in tall grass, soft birds';
+const SFX_CERF=[
+ [{loop:1,dur:22,text:'cozy house interior, quiet room tone with faint birds outside a window'}],
+ [{loop:1,dur:22,text:PARK},{t:.4,dur:3,text:'quick footsteps running on grass, cartoon'},{t:.4,dur:6,vol:.4,text:'kite fabric flapping in the wind'}],
+ [{loop:1,dur:22,text:PARK},{t:0,dur:2,text:'strong gust of wind whoosh'},{t:2.3,dur:1,text:'fabric ripping tearing, cartoon'}],
+ [{loop:1,dur:22,text:'quiet park ambience, light breeze, a few distant birds, slightly tense'},{t:0,dur:2,text:'leaves rustling in a bush'}],
+ [{loop:1,dur:22,text:'melancholic quiet park, soft wind, very distant birds'},{ln:0,off:2.2,dur:2,text:'sad trombone wah wah wah, cartoon, short'}],
+ [{loop:1,dur:22,text:PARK},{t:0,dur:1.5,text:'owl wings flapping and landing softly'}],
+ [{loop:1,dur:22,text:MEADOW}],
+ [{loop:1,dur:22,text:MEADOW},{loop:1,dur:22,vol:.18,text:'light cheerful acoustic ukulele melody, kids cartoon, happy ending'},{ln:1,off:.6,dur:1.5,text:'adhesive tape ripping off a roll'},{ln:2,off:1.2,dur:2,text:'happy cartoon sparkle jingle, short'},{ln:2,off:2.4,dur:3,text:'kite flying away whoosh with fabric flapping'}]
+];
+const SFX_NUIT=[
+ [{loop:1,dur:22,text:'evening countryside ambience at dusk, birds settling, soft breeze'}],
+ [{loop:1,dur:22,text:'crickets chirping at night, calm countryside ambience'}],
+ [{loop:1,dur:22,text:'quiet cozy bedroom room tone at night, faint distant crickets outside'},{t:.2,dur:3,text:'child walking on a creaky wooden floor in a bedroom'}],
+ [{loop:1,dur:22,text:'dark quiet bedroom room tone, low tense hum, faint clock ticking'},{ln:0,off:0,dur:1,text:'light switch click in a quiet room'},{ln:1,off:-.6,dur:2,text:'old wooden floor creaking in the dark, spooky'},{ln:4,off:0,dur:1,text:'soft plush toy squeak, cartoon'}],
+ [{loop:1,dur:22,text:'wind blowing at night with distant crickets'},{t:0,dur:2,text:'wooden door creaking open then closing softly'},{t:.9,dur:3,text:'quick footsteps on grass at night, cartoon'},{ln:3,off:-.4,dur:3,text:'owl hooting twice at night'}],
+ [{loop:1,dur:22,text:'quiet night forest ambience, soft wind through trees, distant owl'},{t:0,dur:1.5,text:'owl wings flapping and landing softly'}],
+ [{loop:1,dur:22,text:'gentle night ambience, soft crickets and a light breeze'},{loop:1,dur:22,vol:.18,text:'soft dreamy lullaby, music box, calm and magical'},{ln:0,off:.2,dur:3,text:'magical twinkling stars chime, soft and gentle'}],
+ [{loop:1,dur:22,text:'calm night outside with soft crickets'},{loop:1,dur:22,vol:.18,text:'warm gentle lullaby, music box and soft strings, reassuring'},{ln:3,off:0,dur:1,text:'soft click of a small night light turning on'}],
+ [{loop:1,dur:22,text:'quiet bedroom at night, very soft breathing and faint crickets'},{loop:1,dur:22,vol:.18,text:'sleepy lullaby, music box, slowly fading, calm'}]
+];
 function defaultProject(){
   const mk=(name,bg,lines)=>{const s={id:uid(),name,bg,dur:0,lines:lines.map(([who,text])=>({id:uid(),who,text,t:0,audio:null})),actors:[]};autoTimes(s);return s;};
   const A=(spr,x,y,s,acts,extra)=>Object.assign({id:uid(),spr,x,y,s,flip:false,z:0,acts:acts||[]},extra||{});
@@ -341,7 +376,9 @@ function defaultProject(){
     A('lapin/debout',1010,GROUND,1,[o(L[2]+1.2,.8,'jump',{h:100})]),
     A('objets/cerf-volant-dechire',640,515,.9,[o(L[1]+1,.1,'swap',{spr:'objets/cerf-volant'}),o(L[2]+1.6,2.5,'glide',{x:1000,y:180}),o(L[2]+1.6,3,'wobble')],{z:1000})
   ];sc.push(s);
-  return {v:1,scenes:sc,custom:{},voices:{}};
+  setSfx(sc,SFX_CERF);
+  sc.forEach((s,i)=>{s.lines.forEach((l,j)=>l.key='s'+(i+1)+'l'+(j+1));(s.sfx||[]).forEach((x,j)=>x.key='s'+(i+1)+'x'+(j+1));});
+  return {v:1,scenes:sc,custom:{},voices:{},tpl:'cerf'};
 }
 let P=defaultProject();
 P.eid=uid();P.name='Épisode 1 · Le cerf-volant';
@@ -397,11 +434,31 @@ function buildNuit(){
   s.actors=[A('objets/veilleuse',760,GROUND+30,1,[],{z:-50}),
             A('ourson/debout',380,GROUND,1,[X(0,'content')]),
             A('renard/assis',600,GROUND-20,1,[X(L[1]-.3,'endormi'),o(L[1],2.5,'wobble')])];sc.push(s);
+  setSfx(sc,SFX_NUIT);
   sc.forEach((s,i)=>{s.lines.forEach((l,j)=>l.key='s'+(i+1)+'l'+(j+1));(s.sfx||[]).forEach((x,j)=>x.key='s'+(i+1)+'x'+(j+1));});
   return sc;
 }
 const TEMPLATES={nuit:{name:'Épisode 2 · Roux a peur du noir',build:buildNuit}};
-let SEEDED=[];
+let SEEDED=[],SFXREV={};
+const SFXV=2;
+/* Met à jour les bruitages/ambiances des épisodes fournis (nuit, cerf-volant) sans toucher au reste */
+function refreshTpl(){
+  const B={nuit:()=>buildNuit(),cerf:()=>defaultProject().scenes};
+  const isCerf=e=>e.tpl==='cerf'||(!e.tpl&&/cerf-volant/i.test(e.name||''));
+  const targets=[P,...EPS.filter(e=>e.id!==P.eid&&e.scenes)];
+  for(const k in B){
+    if(SFXREV[k]===SFXV)continue;
+    for(const e of targets){
+      if(!(e.tpl===k||(k==='cerf'&&isCerf(e))))continue;
+      const fresh=B[k]();
+      e.tpl=k;
+      fresh.forEach((fs,i)=>{const es=e.scenes[i];if(!es||es.name!==fs.name)return;
+        es.sfx=fs.sfx;
+        es.lines.forEach((l,j)=>{if(!l.key&&fs.lines[j]&&fs.lines[j].text===l.text)l.key=fs.lines[j].key;});});
+    }
+    SFXREV[k]=SFXV;
+  }
+}
 function seedEpisodes(){
   for(const k in TEMPLATES){
     if(SEEDED.includes(k))continue;
@@ -523,9 +580,19 @@ function scheduleAudio(from,dest){
   }));
   P.scenes.forEach((s,i)=>(s.sfx||[]).forEach(x=>{
     if(!x.audio||!x.audio.buf)return;
-    const ls=st[i]+x.t,end=ls+x.audio.buf.duration;if(end<=from)return;
-    const src=AC.createBufferSource(),g=AC.createGain();g.gain.value=x.vol==null?.6:x.vol;
+    const ls=st[i]+x.t,end=x.loop?st[i]+sceneDur(s):ls+x.audio.buf.duration;if(end<=from)return;
+    const src=AC.createBufferSource(),g=AC.createGain(),vol=x.vol==null?.6:x.vol;g.gain.value=vol;
     src.buffer=x.audio.buf;src.connect(g);g.connect(dest);
+    if(x.loop){
+      /* ambiance : tourne en boucle jusqu'à la fin de la scène, avec fondu d'entrée et de sortie */
+      const se=st[i]+sceneDur(s),t0=Math.max(ls,from),fin=1,w0=AC.currentTime+Math.max(0,ls-from),w1=AC.currentTime+(se-from);
+      if(w1<=AC.currentTime)return;
+      src.loop=true;
+      const off=((t0-ls)%x.audio.buf.duration);
+      g.gain.setValueAtTime(0,w0);g.gain.linearRampToValueAtTime(vol,w0+fin);
+      g.gain.setValueAtTime(vol,Math.max(w0+fin,w1-fin));g.gain.linearRampToValueAtTime(0,w1);
+      src.start(w0,off);src.stop(w1+.05);live.push(src);return;
+    }
     src.start(AC.currentTime+Math.max(0,ls-from),Math.max(0,from-ls));live.push(src);
   }));
 }
@@ -575,7 +642,7 @@ const IDB={
 const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v}:null;
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
-  return{v:2,ex:1,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,scenes:serScenes(e.scenes)}))};
+  return{v:2,ex:1,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
@@ -590,7 +657,7 @@ async function restore(){
     const s2=await IDB.get('project2');
     if(s2&&s2.v===2&&s2.episodes&&s2.episodes.length){
       for(const id in s2.custom||{}){const c=s2.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
-      SEEDED=s2.seeded||[];
+      SEEDED=s2.seeded||[];SFXREV=s2.sfxrev||{};
       EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes,tpl:e.tpl}));
       const cur=EPS.find(e=>e.id===s2.cur)||EPS[0];
       P={v:1,eid:cur.id,name:cur.name,tpl:cur.tpl,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
@@ -893,7 +960,7 @@ async function genSfx(x){
   if(VOICE.busy)return;VOICE.busy=true;renderBody();
   try{
     ensureAudio();
-    const r=await fetch('/api/sfx',{method:'POST',headers:apiHeaders(),body:JSON.stringify({text:x.text,duration:x.dur||0})});
+    const r=await fetch('/api/sfx',{method:'POST',headers:apiHeaders(),body:JSON.stringify({text:x.text,duration:x.dur||0,loop:!!x.loop})});
     if(r.status===401){VOICE.locked=true;toast('Mot de passe refusé.');}
     else if(!r.ok)toast('ElevenLabs a refusé la demande ('+r.status+').');
     else{const ab=await r.arrayBuffer();const buf=await AC.decodeAudioData(ab.slice(0));x.audio={name:'Bruitage ElevenLabs',ab,buf,dur:buf.duration};scheduleSave();toast('Bruitage généré.');}
@@ -909,6 +976,8 @@ function sfxCard(s,x,i){
       el('label',{class:'fld'},el('span',{text:'Début (s)'}),numInput(x.t,0,300,.1,v=>{x.t=v;scheduleSave();})),
       el('label',{class:'fld'},el('span',{text:'Durée (s, 0 = auto)'}),numInput(x.dur||0,0,30,.5,v=>{x.dur=v;scheduleSave();})),
       el('label',{class:'fld'},el('span',{text:'Volume'}),numInput(x.vol==null?.6:x.vol,0,1,.1,v=>{x.vol=v;scheduleSave();}))),
+    (()=>{const cb=el('input',{type:'checkbox'});cb.checked=!!x.loop;cb.addEventListener('change',()=>{x.loop=cb.checked;scheduleSave();});
+      return el('label',{class:'fld',style:'flex-direction:row;align-items:center;gap:8px'},cb,el('span',{text:'Ambiance : tourne en boucle pendant toute la scène'}));})(),
     el('div',{class:'audio'},
       el('span',{class:'name',text:x.audio?`${x.audio.name} · ${x.audio.dur.toFixed(1)} s`:'Pas de son'}),
       VOICE.ok&&!VOICE.locked?el('button',{class:'btn sm',type:'button',disabled:VOICE.busy,onclick:()=>genSfx(x)},x.audio?'Regénérer':'Générer'):null,
@@ -1212,7 +1281,7 @@ $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.va
 setPlayIcon();
 const fontsReady=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('600 36px "Baloo 2"'),document.fonts.load('400 16px Nunito')]).catch(()=>{}):Promise.resolve();
 (async()=>{
-  await restore();seedEpisodes();scheduleSave();initVoices();
+  await restore();seedEpisodes();refreshTpl();scheduleSave();initVoices();
   UI.scene=0;UI.t=startsOf()[0]+restLocal(P.scenes[0]);
   renderPanels();draw();
   fontsReady.then(()=>draw());
