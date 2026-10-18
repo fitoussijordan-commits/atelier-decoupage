@@ -94,6 +94,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .pend{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
 .pend .card img{height:80px;object-fit:contain;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 50%/14px 14px;border-radius:8px}
 .hide{display:none!important}
+/* Écran d'export : la scène disparaît, l'export prend toute la page */
+body.exporting .stage-col{position:absolute!important;left:-99999px;top:0;width:640px;visibility:hidden}
+body.exporting .app{grid-template-columns:minmax(0,1fr);max-width:720px;margin:0 auto}
+body.exporting .tabs{display:none}
+.backbar{display:flex;align-items:center;gap:10px}
 @media (max-width:900px){
   .app{grid-template-columns:minmax(0,1fr);gap:10px}
   .brand span{display:none}
@@ -894,7 +899,7 @@ async function restore(){
 }
 
 /* ================= Interface ================= */
-function setTab(t){UI.tab=t;renderPanels();}
+function setTab(t){UI.tab=t;document.body.classList.toggle('exporting',t==='export');renderPanels();if(t==='export')window.scrollTo(0,0);}
 function onSceneChanged(){UI.actorId=null;renderStrip();if(UI.tab!=='lib'&&UI.tab!=='export'&&UI.tab!=='write')renderBody();}
 function changed(quiet){scheduleSave();draw();if(!quiet){renderStrip();}}
 function selectScene(i){
@@ -1693,6 +1698,7 @@ function thumbCard(){
 function tabExport(b){
   const supported=!!(window.MediaRecorder&&cv.captureStream);
   b.append(
+    el('div',{class:'backbar'},el('button',{class:'btn',type:'button',disabled:!!UI.rec,onclick:()=>setTab('scene')},'← Retour à l\'atelier'),el('h2',{text:'Export'})),
     el('p',{class:'hint',text:`Épisode : ${P.scenes.length} scène${P.scenes.length>1?'s':''}, ${fmt(totalDur())}. L'export fabrique la vidéo image par image : laisse cet écran ouvert jusqu'à la fin.`}),
     el('div',{class:'row'},
       el('button',{class:'btn primary',type:'button',disabled:!supported||!!UI.rec,onclick:()=>exportVideo(false)},'Exporter l\'épisode'),
@@ -1708,7 +1714,7 @@ function tabExport(b){
       slider('Volume de la musique',()=>CFG.music,v=>{CFG.music=v;scheduleSave();},0,.6,.02),
       el('p',{class:'hint',text:Object.keys(LIB).length?`${Object.keys(LIB).length} sons communs chargés (musiques, jingles, bruitages).`:'Sons communs pas encore chargés.'}),
       el('div',{class:'row'},el('button',{class:'btn',type:'button',disabled:VOICE.busy||!VOICE.ok||VOICE.locked,onclick:genAll},VOICE.busy?'Génération…':'Tout générer (voix + sons)'),el('span',{class:'hint',text:missingText()}))),
-    UI.last?(()=>{const m=ytMeta(),v=UI.last;
+    ...(UI.last?[(()=>{const m=ytMeta(),v=UI.last;
       const f=(lbl,val,rows)=>{const i=rows?el('textarea',{rows}):el('input',{type:'text'});i.value=val;
         return el('label',{class:'fld'},el('span',{text:lbl}),i,el('button',{class:'btn sm',type:'button',onclick:()=>copyText(i.value)},'Copier'));};
       return el('div',{class:'card'},
@@ -1716,7 +1722,7 @@ function tabExport(b){
         el('div',{class:'row'},
           el('button',{class:'btn primary',type:'button',onclick:shareVideo},'Envoyer vers YouTube…'),
           el('button',{class:'btn',type:'button',onclick:()=>saveBlob(v.blob,v.name)},'Enregistrer le fichier')),
-        el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}));})():null,
+        el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}));})()]:[]),
     ...(()=>{const m=ytMeta();
       const f=(lbl,key,rows)=>{const i=rows?el('textarea',{rows}):el('input',{type:'text'});i.value=m[key];
         i.addEventListener('input',()=>{P.yt=Object.assign({},P.yt||{},{[key]:i.value});scheduleSave();});
@@ -1923,7 +1929,7 @@ cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',end
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
 $('#btnPlay').addEventListener('click',()=>{if(UI.playing)pause();else play();});
 $('#btnRestart').addEventListener('click',()=>{pause();seek(0);});
-$('#btnTopExport').addEventListener('click',()=>{setTab('export');$('#body').scrollIntoView({behavior:'smooth',block:'start'});});
+$('#btnTopExport').addEventListener('click',()=>setTab('export'));
 $('#tracks').addEventListener('pointerdown',e=>{const c=e.currentTarget,r=c.getBoundingClientRect(),x=e.clientX-r.left;if(x<64)return;if(UI.playing)pause();seek((x-64)/(r.width-68)*totalDur());});
 window.addEventListener('resize',()=>drawTracks());
 $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.value/1000*totalDur());});
