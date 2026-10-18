@@ -14,7 +14,9 @@ module.exports = async (req, res) => {
       if (!r.ok) return res.status(r.status).json({ error: 'elevenlabs ' + r.status });
       const j = await r.json();
       const voices = (j.voices || []).map(v => ({ id: v.voice_id, name: v.name }));
-      return res.status(200).json({ voices });
+      let models = [];
+      try { const m = await fetch(API + '/models', { headers: { 'xi-api-key': key } }); const mj = await m.json(); models = (Array.isArray(mj) ? mj : []).filter(x => x.can_do_text_to_speech && (x.languages || []).some(l => l.language_id === 'fr')).map(x => ({ id: x.model_id, name: x.name })); } catch (e) {}
+      return res.status(200).json({ voices, models });
     }
     if (req.method === 'POST') {
       let body = req.body;
