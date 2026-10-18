@@ -204,7 +204,7 @@ const HEAD={ /* [milieu des yeux x, y, écart entre les yeux] en pixels du sprit
  'chouette/debout':[129.5,79,59],'chouette/pointe':[100,57,41],'chouette/assis':[77,54,42],'chouette/salue':[91,57,44],'chouette/lit':[94.5,54.5,41],
  'ourson/debout':[107,86,70],'lapin/debout':[70.5,157,53],'lapin/salue':[58.5,85.5,31],'lapin/assis':[83,111.5,39],'lapin/court':[149.5,93,36]
 };
-const HCFG={renard:{dRef:57,cut:66,half:1.75},chouette:{dRef:70,cut:68,half:1.8},ourson:{dRef:70,cut:62,half:1.65},lapin:{dRef:86,cut:58,half:1.7,top:-52}};
+const HCFG={renard:{dRef:57,cut:66,half:1.75},chouette:{dRef:70,cut:68,half:1.8},ourson:{dRef:70,cut:62,half:1.65},lapin:{dRef:86,cut:78,half:1.7,top:-52}};
 const FACEM={
  'renard/visage-content':[106.5,102],'renard/visage-surpris':[106.5,103],'renard/visage-colere':[112,98],'renard/visage-inquiet':[108,102],'renard/visage-triste':[120.5,91],'renard/visage-reflechit':[109,102.5],'renard/visage-tres-content':[106,103.5],'renard/visage-endormi':[109,106],'renard/visage-effraye':[110,106.5],
  'chouette/visage-content':[147,97],'chouette/visage-surpris':[142,93],'chouette/visage-triste':[143,97],'chouette/visage-inquiet':[157,100],'chouette/visage-rit':[133,97],'chouette/visage-reflechit':[124,99],
@@ -231,7 +231,8 @@ function composite(bodyId,expr){
   const c=cvs.getContext('2d');c.drawImage(B.img,PAD,PAD);
   const mx=hb[0]+PAD,my=hb[1]+PAD,cutY=my+cutB*sc,half=cfg.half*hb[2];
   const topY=cfg.top!=null?my+cfg.top*sc:0,clrY=cfg.top!=null?topY+10:0;
-  c.save();c.globalCompositeOperation='destination-out';c.fillRect(mx-half,clrY,half*2,cutY-10-clrY);c.restore();
+  /* lapin (top) : on ne vide pas un rectangle, le visage se pose sur la tête du corps (pas de trou sur les côtés) */
+  if(cfg.top==null){c.save();c.globalCompositeOperation='destination-out';c.fillRect(mx-half,clrY,half*2,cutY-10-clrY);c.restore();}
   const t=document.createElement('canvas');t.width=cvs.width;t.height=cvs.height;const tc=t.getContext('2d');
   tc.drawImage(F.img,mx-fm[0]*sc,my-fm[1]*sc,F.w*sc,F.h*sc);
   const mk=document.createElement('canvas');mk.width=t.width;mk.height=t.height;const mc=mk.getContext('2d');
