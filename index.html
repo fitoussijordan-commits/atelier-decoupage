@@ -403,7 +403,7 @@ function defaultProject(){
 let P=defaultProject();
 P.eid=uid();P.name='Épisode 1 · Le cerf-volant';
 let EPS=[{id:P.eid}];            /* liste des épisodes ; l'épisode ouvert vit dans P */
-const allEps=()=>EPS.map(e=>e.id===P.eid?{id:P.eid,name:P.name,scenes:P.scenes,tpl:P.tpl}:e);
+const allEps=()=>EPS.map(e=>e.id===P.eid?{id:P.eid,name:P.name,scenes:P.scenes,tpl:P.tpl,yt:P.yt}:e);
 function blankScenes(){
   const s={id:uid(),name:'Scène 1',bg:'parc',dur:0,lines:[{id:uid(),who:'Narrateur',text:'Il était une fois…',t:0,audio:null}],actors:[]};
   autoTimes(s);return [s];
@@ -853,7 +853,7 @@ const IDB={
 const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v}:null;
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
-  return{v:2,ex:1,cfg:CFG,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,scenes:serScenes(e.scenes)}))};
+  return{v:2,ex:1,cfg:CFG,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,yt:e.yt,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
@@ -869,9 +869,9 @@ async function restore(){
     if(s2&&s2.v===2&&s2.episodes&&s2.episodes.length){
       for(const id in s2.custom||{}){const c=s2.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
       SEEDED=s2.seeded||[];SFXREV=s2.sfxrev||{};Object.assign(CFG,s2.cfg||{});
-      EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes,tpl:e.tpl}));
+      EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes,tpl:e.tpl,yt:e.yt}));
       const cur=EPS.find(e=>e.id===s2.cur)||EPS[0];
-      P={v:1,eid:cur.id,name:cur.name,tpl:cur.tpl,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
+      P={v:1,eid:cur.id,name:cur.name,tpl:cur.tpl,yt:cur.yt,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
       decodeAll(EPS);
       return true;
     }
@@ -912,7 +912,7 @@ function renderStrip(){
 function loadEpisode(id){
   const e=allEps().find(x=>x.id===id);if(!e)return;
   pause();EPS=allEps();
-  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.scenes=e.scenes;UI.last=null;
+  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.yt=e.yt;P.scenes=e.scenes;UI.last=null;
   UI.scene=0;UI.actorId=null;UI.t=startsOf()[0]+restLocal(P.scenes[0]);UI.confirmDelEp=false;
   scheduleSave();renderPanels();draw();syncAudio();
 }
@@ -1256,6 +1256,7 @@ function parseScript(txt){
     const line=raw.trim();if(!line||line.startsWith('//'))return;
     let m;
     if((m=line.match(/^titre\s*:\s*(.+)$/i))){out.name=m[1].trim();return;}
+    if((m=line.match(/^(description|tags)\s*:\s*(.+)$/i))){out.yt=out.yt||{};out.yt[norm(m[1])==='tags'?'tags':'desc']=m[2].trim().replace(/\\n/g,'\n');return;}
     if((m=line.match(/^#+\s*(.*?)\s*(?:\((.*)\))?\s*$/))){
       const o={};
       for(const tk0 of (m[2]||'').split(',')){const tk=norm(tk0);if(!tk)continue;
@@ -1353,6 +1354,8 @@ function buildFromScript(ps){
   });
 }
 const FORMAT_HELP=`Titre : Épisode 3 · Le titre
+Description : 2 ou 3 phrases pour YouTube (facultatif)
+Tags : mots-clés séparés par des virgules (facultatif)
 # Nom de la scène (décor, musique)
 Perso : réplique
 Perso [expression] : réplique
@@ -1400,7 +1403,7 @@ function createFromScript(txt){
   const ps=parseScript(txt||'');
   if(!ps.scenes.some(s=>s.lines.length)){UI.scriptErr=['Aucune réplique trouvée. Touche « Exemple » pour voir le format.',...ps.errors];renderBody();return;}
   const scenes=buildFromScript(ps),id=uid();
-  EPS=allEps();EPS.push({id,name:ps.name||('Épisode '+(EPS.length+1)),scenes});
+  EPS=allEps();EPS.push({id,name:ps.name||('Épisode '+(EPS.length+1)),scenes,yt:ps.yt});
   UI.scriptErr=ps.errors;loadEpisode(id);UI.tab='write';renderPanels();
   toast(`Épisode créé : ${scenes.length} scène${scenes.length>1?'s':''}.${ps.errors.length?' Certaines lignes n\'ont pas été comprises.':' Touche « Tout générer ».'}`);
 }
@@ -1619,7 +1622,18 @@ const YT_META={
     desc:"Pistache prête son cerf-volant rouge à Roux. Un coup de vent, et il se déchire. Roux garde son secret… jusqu'à ce qu'il n'en puisse plus. Dire la vérité, ça fait peur, mais après, on se sent léger !\n\nUne histoire sur l'honnêteté et l'amitié, pour les enfants de 3 à 7 ans.\n\n#dessinanimé #enfants #honnêteté #histoire",
     tags:'dessin animé, enfants, vérité, honnêteté, histoire, animaux, amitié, renard, lapin'}
 };
-const ytMeta=()=>YT_META[P.tpl]||{title:P.name||'Mon épisode',desc:'',tags:''};
+function autoMeta(){
+  const t=epTitle().title||P.name||'Mon épisode',lines=P.scenes.flatMap(s=>s.lines).filter(l=>(l.text||'').trim());
+  const first=(lines.find(l=>l.who==='Narrateur')||lines[0]||{text:''}).text,last=lines.length?lines[lines.length-1].text:'';
+  const who=[...new Set(lines.map(l=>l.who).filter(w=>w&&w!=='Narrateur'))];
+  const SP={Roux:'Roux le renard',Pistache:'Pistache le lapin',Caramel:'Caramel l\'ourson',Olympe:'Olympe la chouette'},AN={Roux:'renard',Pistache:'lapin',Caramel:'ourson',Olympe:'chouette'};
+  const names=who.map(w=>SP[w]||w),list=names.length>1?names.slice(0,-1).join(', ')+' et '+names[names.length-1]:(names[0]||'Roux le renard');
+  const desc=`${t} : une nouvelle aventure avec ${list} !\n\n${first}\n\n« ${last} »\n\nUn dessin animé doux pour les enfants de 3 à 7 ans, sur l'amitié, les émotions et les petites leçons de la vie. Abonne-toi pour ne rater aucune aventure de Roux !\n\n#dessinanimé #enfants #histoire #lesaventuresderoux`;
+  const kw=t.toLowerCase().split(/[^a-zà-ÿ]+/).filter(w=>w.length>4&&w!=='roux');
+  const tags=[...new Set(['dessin animé','dessin animé enfants','histoire pour enfants','les aventures de roux',...who.map(w=>AN[w]).filter(Boolean),'animaux','amitié','émotions',...kw])].join(', ');
+  return{title:`${t} | Dessin animé pour enfants`,desc,tags};
+}
+const ytMeta=()=>{const a=YT_META[P.tpl]||autoMeta(),y=P.yt||{};return{title:y.title||a.title,desc:y.desc||a.desc,tags:y.tags||a.tags};};
 async function copyText(t){try{await navigator.clipboard.writeText(t);toast('Copié.');}catch(e){toast('Copie impossible : sélectionne le texte à la main.');}}
 async function shareVideo(){
   const v=UI.last;if(!v)return;
@@ -1656,8 +1670,14 @@ function tabExport(b){
         el('div',{class:'row'},
           el('button',{class:'btn primary',type:'button',onclick:shareVideo},'Envoyer vers YouTube…'),
           el('button',{class:'btn',type:'button',onclick:()=>saveBlob(v.blob,v.name)},'Enregistrer le fichier')),
-        el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}),
-        f('Titre',m.title,0),f('Description',m.desc,6),f('Tags',m.tags,2));})():null,
+        el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}));})():null,
+    (()=>{const m=ytMeta();
+      const f=(lbl,key,rows)=>{const i=rows?el('textarea',{rows}):el('input',{type:'text'});i.value=m[key];
+        i.addEventListener('input',()=>{P.yt=Object.assign({},P.yt||{},{[key]:i.value});scheduleSave();});
+        return el('label',{class:'fld'},el('span',{text:lbl}),i,el('button',{class:'btn sm',type:'button',onclick:()=>copyText(i.value)},'Copier'));};
+      return el('div',{class:'card'},el('h3',{text:'Texte pour YouTube'}),
+        el('p',{class:'hint',text:'Préparé automatiquement d\'après l\'épisode. Tu peux le modifier, c\'est gardé.'}),
+        f('Titre','title',0),f('Description','desc',7),f('Tags','tags',2));})(),
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
     el('div',{class:'card'},
       el('h3',{text:'Épisodes'}),
@@ -1701,7 +1721,7 @@ function fixMp4Duration(buf,secs){
       let sz=dv.getUint32(o),hd=8;if(sz===1){sz=rd(o+8,true);hd=16;}else if(sz===0)sz=e-o;
       if(sz<8||o+sz>e)break;
       const t=typ(o),v1=u8[o+hd]===1,b=o+hd+4;
-      if(t==='moov'||t==='trak'||t==='mdia'||t==='mvex'||t==='moof')walk(o+hd,o+sz,null);
+      if(t==='moov'||t==='trak'||t==='mdia'||t==='mvex'||t==='moof'||t==='edts')walk(o+hd,o+sz,null);
       else if(t==='traf'){const tr={id:0};walk(o+hd,o+sz,tr);}
       else if(t==='tfhd'&&trk)trk.id=dv.getUint32(b);
       else if(t==='tfdt'&&trk)tfdts.push({o:b,v8:v1,id:trk.id,val:rd(b,v1)});
@@ -1709,6 +1729,10 @@ function fixMp4Duration(buf,secs){
       else if(t==='tkhd'){put(v1?b+24:b+16,v1,Math.round(secs*mts));n++;}
       else if(t==='mdhd'){const ts=dv.getUint32(v1?b+16:b+8)||1000;put(v1?b+20:b+12,v1,Math.round(secs*ts));n++;}
       else if(t==='mehd'){put(b,v1,Math.round(secs*mts));n++;}
+      else if(t==='elst'){ /* liste de montage : on supprime les « blancs » du début (piste décalée) */
+        const cnt=dv.getUint32(b),es=v1?20:12;
+        for(let k=0;k<cnt;k++){const p=b+4+k*es;const mt=v1?dv.getInt32(p+8)*4294967296+dv.getUint32(p+12):dv.getInt32(p+4);
+          put(p,v1,mt<0?0:Math.round(secs*mts));n++;}}
       o+=sz;
     }
   };
