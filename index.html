@@ -1650,18 +1650,22 @@ async function saveBlob(blob,name){
     const a=el('a',{href:URL.createObjectURL(blob),download:name});document.body.append(a);a.click();a.remove();toast('Fichier prêt : '+name);
   }
 }
-/* Répare la durée écrite par Safari (0xFFFFFFFF = « inconnue ») dans les en-têtes MP4 */
+/* Répare les en-têtes MP4 écrits par Safari : durée « inconnue » et horloge qui ne démarre pas à 0 */
 function fixMp4Duration(buf,secs){
   const dv=new DataView(buf),u8=new Uint8Array(buf);
   const typ=o=>String.fromCharCode(u8[o+4],u8[o+5],u8[o+6],u8[o+7]);
-  let mts=1000,n=0;
+  const rd=(o,v8)=>v8?dv.getUint32(o)*4294967296+dv.getUint32(o+4):dv.getUint32(o);
   const put=(o,v8,val)=>{if(v8){dv.setUint32(o,Math.floor(val/4294967296));dv.setUint32(o+4,val>>>0);}else dv.setUint32(o,Math.min(val,4294967294));};
-  const walk=(s,e,inMdia)=>{
+  let mts=1000,n=0;const tfdts=[];
+  const walk=(s,e,trk)=>{
     for(let o=s;o+8<=e;){
-      let sz=dv.getUint32(o),hd=8;if(sz===1){sz=dv.getUint32(o+8)*4294967296+dv.getUint32(o+12);hd=16;}else if(sz===0)sz=e-o;
+      let sz=dv.getUint32(o),hd=8;if(sz===1){sz=rd(o+8,true);hd=16;}else if(sz===0)sz=e-o;
       if(sz<8||o+sz>e)break;
       const t=typ(o),v1=u8[o+hd]===1,b=o+hd+4;
-      if(t==='moov'||t==='trak'||t==='mdia'||t==='mvex')walk(o+hd,o+sz,t==='mdia');
+      if(t==='moov'||t==='trak'||t==='mdia'||t==='mvex'||t==='moof')walk(o+hd,o+sz,null);
+      else if(t==='traf'){const tr={id:0};walk(o+hd,o+sz,tr);}
+      else if(t==='tfhd'&&trk)trk.id=dv.getUint32(b);
+      else if(t==='tfdt'&&trk)tfdts.push({o:b,v8:v1,id:trk.id,val:rd(b,v1)});
       else if(t==='mvhd'){mts=dv.getUint32(v1?b+16:b+8)||1000;put(v1?b+20:b+12,v1,Math.round(secs*mts));n++;}
       else if(t==='tkhd'){put(v1?b+24:b+16,v1,Math.round(secs*mts));n++;}
       else if(t==='mdhd'){const ts=dv.getUint32(v1?b+16:b+8)||1000;put(v1?b+20:b+12,v1,Math.round(secs*ts));n++;}
@@ -1669,7 +1673,10 @@ function fixMp4Duration(buf,secs){
       o+=sz;
     }
   };
-  walk(0,buf.byteLength,false);
+  walk(0,buf.byteLength,null);
+  /* chaque piste repart de 0 */
+  const first={};for(const f of tfdts)if(first[f.id]==null||f.val<first[f.id])first[f.id]=f.val;
+  for(const f of tfdts)if(first[f.id]>0){put(f.o,f.v8,f.val-first[f.id]);n++;}
   return n;
 }
 async function exportVideo(sceneOnly){
