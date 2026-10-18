@@ -496,7 +496,10 @@ function walkFx(st,x0,x1,lt,d,p,done,run){
   st.x=lerp(x0,x1,p);
   const g=groupOf(st.spr),wid=g+(run&&SPR[g+'/court']?'/court':'/marche'),f=run?5:3;
   st.oy-=Math.abs(Math.sin(lt*Math.PI*f))*(run?20:12);
-  if(g!=='objets'&&SPR[wid]){st.spr=wid;st.flip=x1<x0;}else st.rot+=Math.sin(lt*Math.PI*f)*.03;
+  if(g!=='objets'&&SPR[wid]){st.spr=wid;st.flip=x1<x0;}
+  else if(g!=='objets'){ /* pas de pose de marche : dandinement de face, pas à pas */
+    const ph=Math.sin(lt*Math.PI*f);st.rot+=ph*(run?.09:.07);st.ox+=ph*4;const c=Math.abs(Math.cos(lt*Math.PI*f));st.sy*=1-.035*c;st.sx*=1+.025*c;}
+  else st.rot+=Math.sin(lt*Math.PI*f)*.03;
 }
 function stateAt(a,t){
   const st={x:a.x,y:a.y,s:a.s,flip:!!a.flip,spr:a.spr,expr:a.expr||'',alpha:1,rot:0,ox:0,oy:0,sx:1,sy:1};
