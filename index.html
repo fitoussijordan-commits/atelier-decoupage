@@ -664,7 +664,7 @@ function renderAt(t){
     cx.restore();
   }
   cx.restore();
-  if(ln&&ln.text){
+  if(ln&&ln.text&&!UI.noSubs){
     cx.save();cx.font='600 36px "Baloo 2",Nunito,system-ui,sans-serif';cx.textBaseline='alphabetic';
     const maxW=1040,lh=46,pad=18;
     const who=ln.who&&ln.who!=='Narrateur'?ln.who+'  ':'';
@@ -913,7 +913,7 @@ function renderStrip(){
 function loadEpisode(id){
   const e=allEps().find(x=>x.id===id);if(!e)return;
   pause();EPS=allEps();
-  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.yt=e.yt;P.scenes=e.scenes;UI.last=null;
+  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.yt=e.yt;P.scenes=e.scenes;UI.last=null;UI.thumbT=null;
   UI.scene=0;UI.actorId=null;UI.t=startsOf()[0]+restLocal(P.scenes[0]);UI.confirmDelEp=false;
   scheduleSave();renderPanels();draw();syncAudio();
 }
@@ -1645,6 +1645,51 @@ async function shareVideo(){
   }catch(e){if(e&&e.name==='AbortError')return;}
   toast('Le partage direct n\'est pas disponible ici : utilise « Enregistrer le fichier ».');
 }
+/* ---- Miniature YouTube générée dans l'outil ---- */
+function thumbAutoTime(){
+  const W8={effraye:5,surpris:5,'tres-content':4,rit:4,triste:3,inquiet:3,gene:2,colere:3,content:1},st=startsOf(),tot=totalDur();
+  let best=null;
+  P.scenes.forEach((s,i)=>{for(const a of s.actors)for(const c of a.acts)if(c.type==='expr'&&W8[c.expr]){
+    const t=st[i]+c.t+.7,score=W8[c.expr]+(t>tot*.15&&t<tot*.85?1:0)+(groupOf(a.spr)==='renard'?2:0)+Math.min(2,s.actors.length-1)*.5;if(!best||score>best.score)best={t,score};}});
+  return best?best.t:(st[Math.floor(P.scenes.length/2)]||0)+1.5;
+}
+const thumbText=()=>(P.yt&&P.yt.thumb)||(epTitle().title||P.name||'').toUpperCase()+' !';
+function makeThumb(t,text){
+  const was=UI.playing;UI.playing=false;UI.noSubs=true;renderAt(t);UI.noSubs=false;UI.playing=was;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.drawImage(cv,0,0);
+  const v=g.createLinearGradient(0,0,0,H*.45);v.addColorStop(0,'rgba(0,0,0,.35)');v.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=v;g.fillRect(0,0,W,H*.45);
+  /* texte sur 2 lignes max, gros, contour épais */
+  const words=text.split(/\s+/).filter(Boolean),lines=[];
+  if(words.length>2){const half=text.length/2;let a='',b='';for(const w of words){if(!b&&(!a||(a+' '+w).length<=half+3))a=(a+' '+w).trim();else b=(b+' '+w).trim();}lines.push(a);if(b)lines.push(b);}else lines.push(text);
+  g.textAlign='center';g.lineJoin='round';
+  lines.forEach((ln,k)=>{let size=104;g.font=`700 ${size}px "Baloo 2",Nunito,system-ui,sans-serif`;const w=g.measureText(ln).width;if(w>1180)size=Math.floor(size*1180/w);
+    g.font=`700 ${size}px "Baloo 2",Nunito,system-ui,sans-serif`;const y=size*.95+k*size*.98+18;
+    g.lineWidth=size*.2;g.strokeStyle='#2b1600';g.strokeText(ln,W/2,y);
+    const gr=g.createLinearGradient(0,y-size*.8,0,y);gr.addColorStop(0,'#fff6b0');gr.addColorStop(1,k?'#ffffff':'#ffd23a');g.fillStyle=gr;g.fillText(ln,W/2,y);});
+  draw();
+  return c;
+}
+async function shareImage(canvas,name){
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+  const file=new File([blob],name,{type:'image/png'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  saveBlob(blob,name);
+}
+function thumbCard(){
+  UI.thumbT=UI.thumbT==null?thumbAutoTime():UI.thumbT;
+  const img=el('img',{alt:'Miniature',style:'width:100%;border-radius:8px;aspect-ratio:16/9;object-fit:cover;background:var(--panel)'});
+  const inp=el('input',{type:'text',value:thumbText()});
+  const refresh=()=>{try{img.src=makeThumb(UI.thumbT,inp.value).toDataURL('image/jpeg',.85);}catch(e){}};
+  inp.addEventListener('input',()=>{P.yt=Object.assign({},P.yt||{},{thumb:inp.value});scheduleSave();clearTimeout(UI.thTimer);UI.thTimer=setTimeout(refresh,250);});
+  setTimeout(refresh,0);
+  return el('div',{class:'card'},el('h3',{text:'Miniature YouTube'}),img,
+    el('label',{class:'fld'},el('span',{text:'Texte de la miniature'}),inp),
+    el('div',{class:'row'},
+      el('button',{class:'btn',type:'button',onclick:()=>{UI.thumbT=thumbAutoTime();refresh();}},'Image auto'),
+      el('button',{class:'btn',type:'button',onclick:()=>{UI.thumbT=UI.t;refresh();}},'Image affichée'),
+      el('button',{class:'btn primary',type:'button',onclick:()=>shareImage(makeThumb(UI.thumbT,inp.value),'miniature-'+(P.tpl||'episode')+'.png')},'Enregistrer la miniature')),
+    el('p',{class:'hint',text:'« Image affichée » prend l\'instant où tu as mis la lecture (mets pause sur un moment drôle). « Enregistrer » ouvre le menu de partage : choisis « Enregistrer l\'image ».'}));
+}
 function tabExport(b){
   const supported=!!(window.MediaRecorder&&cv.captureStream);
   b.append(
@@ -1672,13 +1717,13 @@ function tabExport(b){
           el('button',{class:'btn primary',type:'button',onclick:shareVideo},'Envoyer vers YouTube…'),
           el('button',{class:'btn',type:'button',onclick:()=>saveBlob(v.blob,v.name)},'Enregistrer le fichier')),
         el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}));})():null,
-    (()=>{const m=ytMeta();
+    ...(()=>{const m=ytMeta();
       const f=(lbl,key,rows)=>{const i=rows?el('textarea',{rows}):el('input',{type:'text'});i.value=m[key];
         i.addEventListener('input',()=>{P.yt=Object.assign({},P.yt||{},{[key]:i.value});scheduleSave();});
         return el('label',{class:'fld'},el('span',{text:lbl}),i,el('button',{class:'btn sm',type:'button',onclick:()=>copyText(i.value)},'Copier'));};
-      return el('div',{class:'card'},el('h3',{text:'Texte pour YouTube'}),
+      return [thumbCard(),el('div',{class:'card'},el('h3',{text:'Texte pour YouTube'}),
         el('p',{class:'hint',text:'Préparé automatiquement d\'après l\'épisode. Tu peux le modifier, c\'est gardé.'}),
-        f('Titre','title',0),f('Description','desc',7),f('Tags','tags',2));})(),
+        f('Titre','title',0),f('Description','desc',7),f('Tags','tags',2))];})(),
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
     el('div',{class:'card'},
       el('h3',{text:'Épisodes'}),
