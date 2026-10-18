@@ -717,19 +717,20 @@ async function loadLib(){
     }));
   }catch(e){}
 }
-function scheduleAudio(from,dest){
-  stopAudio();if(!AC)return;
-  const now=AC.currentTime+.03,at=x=>now+Math.max(0,x-from);
+function scheduleAudio(from,dest,ctx){
+  ctx=ctx||AC;
+  if(ctx===AC)stopAudio();if(!ctx)return;
+  const now=ctx.currentTime+.03,at=x=>now+Math.max(0,x-from);
   /* chaîne de sortie : compresseur doux pour un son plus plein et régulier */
-  const comp=AC.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=10;comp.ratio.value=3.5;comp.attack.value=.005;comp.release.value=.25;
-  const out=AC.createGain();out.gain.value=1.1;comp.connect(out);out.connect(dest);
-  const an=AC.createAnalyser();an.fftSize=1024;out.connect(an);UI.an=an;UI.loud=0;
-  const bed=AC.createGain();bed.connect(comp); /* ambiances + musique : baissées sous les voix */
+  const comp=ctx.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=10;comp.ratio.value=3.5;comp.attack.value=.005;comp.release.value=.25;
+  const out=ctx.createGain();out.gain.value=1.1;comp.connect(out);out.connect(dest);
+  const an=ctx.createAnalyser();an.fftSize=1024;out.connect(an);if(ctx===AC){UI.an=an;UI.loud=0;}
+  const bed=ctx.createGain();bed.connect(comp); /* ambiances + musique : baissées sous les voix */
   live.push({stop(){try{out.disconnect();}catch(e){}}});
-  const one=(buf,t0,vol,bus)=>{if(!buf||t0+buf.duration<=from)return;const src=AC.createBufferSource(),g=AC.createGain();g.gain.value=vol;src.buffer=buf;src.connect(g);g.connect(bus||comp);src.start(at(t0),Math.max(0,from-t0));live.push(src);};
+  const one=(buf,t0,vol,bus)=>{if(!buf||t0+buf.duration<=from)return;const src=ctx.createBufferSource(),g=ctx.createGain();g.gain.value=vol;src.buffer=buf;src.connect(g);g.connect(bus||comp);src.start(at(t0),Math.max(0,from-t0));live.push(src);};
   const loop=(buf,t0,t1,vol,bus,fade)=>{
     if(!buf||t1<=from||t1<=t0)return;
-    const src=AC.createBufferSource(),g=AC.createGain();src.buffer=buf;src.loop=true;src.connect(g);g.connect(bus||comp);
+    const src=ctx.createBufferSource(),g=ctx.createGain();src.buffer=buf;src.loop=true;src.connect(g);g.connect(bus||comp);
     const w0=at(t0),w1=at(t1),f=Math.min(fade,(t1-t0)/2);
     g.gain.setValueAtTime(0,now);
     if(from<=t0){g.gain.setValueAtTime(0,w0);g.gain.linearRampToValueAtTime(vol,w0+f);}else g.gain.setValueAtTime(vol,now);
@@ -1647,7 +1648,7 @@ async function shareVideo(){
 function tabExport(b){
   const supported=!!(window.MediaRecorder&&cv.captureStream);
   b.append(
-    el('p',{class:'hint',text:`Épisode : ${P.scenes.length} scène${P.scenes.length>1?'s':''}, ${fmt(totalDur())}. L'export enregistre la lecture en temps réel : laisse cet écran ouvert jusqu'à la fin.`}),
+    el('p',{class:'hint',text:`Épisode : ${P.scenes.length} scène${P.scenes.length>1?'s':''}, ${fmt(totalDur())}. L'export fabrique la vidéo image par image : laisse cet écran ouvert jusqu'à la fin.`}),
     el('div',{class:'row'},
       el('button',{class:'btn primary',type:'button',disabled:!supported||!!UI.rec,onclick:()=>exportVideo(false)},'Exporter l\'épisode'),
       el('button',{class:'btn',type:'button',disabled:!supported||!!UI.rec,onclick:()=>exportVideo(true)},'Exporter cette scène'),
@@ -1742,7 +1743,65 @@ function fixMp4Duration(buf,secs){
   for(const f of tfdts)if(first[f.id]>0){put(f.o,f.v8,f.val-first[f.id]);n++;}
   return n;
 }
+/* ---- Export image par image (WebCodecs) : durée exacte, son complet, plus rapide que la lecture ---- */
+let MUXP=null;
+function loadMuxer(){if(window.Mp4Muxer)return Promise.resolve();if(MUXP)return MUXP;
+  MUXP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='mp4-muxer.js';s.onload=res;s.onerror=()=>{MUXP=null;rej(new Error('muxer'));};document.head.append(s);});return MUXP;}
+async function wcSupport(){
+  if(!window.VideoEncoder||!window.AudioEncoder||!window.VideoFrame||!window.AudioData||!window.OfflineAudioContext)return null;
+  const ok=async(E,c)=>{try{return (await E.isConfigSupported(c)).supported;}catch(e){return false;}};
+  let vc=null;for(const c of ['avc1.42E028','avc1.4D0028','avc1.640028'])if(await ok(VideoEncoder,{codec:c,width:W,height:H,bitrate:4e6,framerate:30})){vc=c;break;}
+  if(!vc)return null;
+  for(const [c,m] of [['mp4a.40.2','aac'],['opus','opus']])if(await ok(AudioEncoder,{codec:c,sampleRate:48000,numberOfChannels:2,bitrate:128000}))return{vc,ac:c,am:m};
+  return null;
+}
+async function exportWC(sceneOnly,sup){
+  await loadMuxer();
+  const st=startsOf(),from=sceneOnly?st[UI.scene]:0,to=sceneOnly?st[UI.scene]+sceneDur(curScene()):totalDur();
+  const FPS=30,N=Math.ceil((to-from)*FPS),SR=48000;
+  UI.rec={cancel:false};renderBody();toast('Préparation du son…');
+  const bar=p=>{const e=$('#recbar');if(e)e.style.width=Math.round(p*100)+'%';};
+  /* 1. le son complet, calculé d'un coup */
+  const oc=new OfflineAudioContext(2,Math.max(1,Math.ceil((to-from)*SR)),SR);
+  scheduleAudio(from,oc.destination,oc);live=[];
+  const mix=await oc.startRendering();
+  const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:sup.vm||'avc',width:W,height:H,frameRate:FPS},audio:{codec:sup.am,numberOfChannels:2,sampleRate:SR},fastStart:'in-memory',firstTimestampBehavior:'offset'});
+  let err=null;
+  const venc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{err=e;}});
+  venc.configure({codec:sup.vc,width:W,height:H,bitrate:4e6,framerate:FPS,latencyMode:'quality'});
+  const aenc=new AudioEncoder({output:(c,m)=>muxer.addAudioChunk(c,m),error:e=>{err=e;}});
+  aenc.configure({codec:sup.ac,sampleRate:SR,numberOfChannels:2,bitrate:128000});
+  const L=mix.getChannelData(0),R=mix.getChannelData(1),CH=1024;
+  for(let i=0;i<mix.length;i+=CH){const n=Math.min(CH,mix.length-i),d=new Float32Array(n*2);d.set(L.subarray(i,i+n),0);d.set(R.subarray(i,i+n),n);
+    const ad=new AudioData({format:'f32-planar',sampleRate:SR,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(i/SR*1e6),data:d});aenc.encode(ad);ad.close();}
+  /* 2. les images, une par une */
+  toast('Fabrication de la vidéo…');
+  const wasPlaying=UI.playing;UI.playing=true;
+  try{
+    for(let k=0;k<N;k++){
+      if(UI.rec.cancel||err)break;
+      UI.t=from+k/FPS;renderAt(UI.t);
+      const vf=new VideoFrame(cv,{timestamp:Math.round(k*1e6/FPS),duration:Math.round(1e6/FPS)});
+      venc.encode(vf,{keyFrame:k%(FPS*2)===0});vf.close();
+      while(venc.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
+      if(k%10===0){bar(k/N);await new Promise(r=>setTimeout(r,0));}
+    }
+  }finally{UI.playing=wasPlaying;}
+  if(UI.rec.cancel||err){try{venc.close();aenc.close();}catch(e){}UI.rec=null;toast(err?'Erreur pendant l\'export ('+(err.message||err)+').':'Export annulé.');renderBody();return true;}
+  await venc.flush();await aenc.flush();muxer.finalize();venc.close();aenc.close();
+  bar(1);UI.rec=null;
+  const blob=new Blob([muxer.target.buffer],{type:'video/mp4'});
+  UI.last={blob,name:(sceneOnly?'scene-'+(UI.scene+1):(P.tpl||'episode'))+'.mp4'};
+  UI.t=from;draw();renderBody();toast('Vidéo prête ('+fmt(to-from)+'). Appuie sur « Envoyer vers YouTube… » ou « Enregistrer le fichier ».');
+  return true;
+}
 async function exportVideo(sceneOnly){
+  if(UI.rec)return;pause();UI.last=null;
+  let sup=null;try{sup=await wcSupport();}catch(e){}
+  if(sup){try{if(await exportWC(sceneOnly,sup))return;}catch(e){UI.rec=null;toast('Export rapide impossible ('+(e.message||e)+'), enregistrement en direct…');}}
+  return exportRec(sceneOnly);
+}
+async function exportRec(sceneOnly){
   if(UI.rec)return;pause();UI.last=null;
   const mime=pickMime();if(!mime){toast('Format vidéo non pris en charge.');return;}
   ensureAudio();
