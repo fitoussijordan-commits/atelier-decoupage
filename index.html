@@ -39,6 +39,7 @@ button{cursor:pointer}
 .tbtn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);width:48px;height:48px}
 .tbtn svg{width:20px;height:20px;fill:currentColor}
 #scrub{flex:1;min-width:0;accent-color:var(--accent)}
+#tracks{display:block;width:100%;height:50px;margin-top:6px;border-radius:8px;background:var(--panel);border:1px solid var(--line);touch-action:none;cursor:pointer}
 .time{font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--muted);flex:none;min-width:5.6em;text-align:right}
 .status{min-height:1.3em;font-size:.82rem;color:var(--muted);margin-top:4px}
 .epbar{display:flex;gap:8px;align-items:center;padding:2px 0 4px}.epbar select{flex:1;min-width:0}
@@ -114,6 +115,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Position dans l'épisode">
       <div class="time" id="time">0:00.0</div>
     </div>
+    <canvas id="tracks" aria-label="Pistes audio : voix, bruitages, musique"></canvas>
     <div class="status" id="status" role="status" aria-live="polite"></div>
     <div class="epbar" id="epbar"></div>
     <div class="strip" id="strip"></div>
@@ -689,8 +691,10 @@ function draw(){renderAt(UI.t);updateTransport();}
 /* ================= Audio et lecture ================= */
 let AC=null,live=[];
 function ensureAudio(){
+  /* iPhone : jouer le son même quand le bouton silencieux est activé */
+  try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback';}catch(e){}
   if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C();}
-  if(AC&&AC.state==='suspended')AC.resume();
+  if(AC&&AC.state!=='running')AC.resume().catch(()=>{});
   return AC;
 }
 function stopAudio(){for(const s of live){try{s.stop();}catch(e){}}live=[];}
@@ -712,6 +716,7 @@ function scheduleAudio(from,dest){
   /* chaîne de sortie : compresseur doux pour un son plus plein et régulier */
   const comp=AC.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=10;comp.ratio.value=3.5;comp.attack.value=.005;comp.release.value=.25;
   const out=AC.createGain();out.gain.value=1.1;comp.connect(out);out.connect(dest);
+  const an=AC.createAnalyser();an.fftSize=1024;out.connect(an);UI.an=an;UI.loud=0;
   const bed=AC.createGain();bed.connect(comp); /* ambiances + musique : baissées sous les voix */
   live.push({stop(){try{out.disconnect();}catch(e){}}});
   const one=(buf,t0,vol,bus)=>{if(!buf||t0+buf.duration<=from)return;const src=AC.createBufferSource(),g=AC.createGain();g.gain.value=vol;src.buffer=buf;src.connect(g);g.connect(bus||comp);src.start(at(t0),Math.max(0,from-t0));live.push(src);};
@@ -784,7 +789,7 @@ function play(from,to,dest){
   ensureAudio();
   const end=to==null?totalDur():to;
   UI.t=from==null?(UI.t>=totalDur()-.05?0:UI.t):from;
-  UI.playing=true;UI.endAt=end;T0=performance.now()/1000-UI.t;
+  UI.playing=true;UI.endAt=end;UI.t0=UI.t;T0=performance.now()/1000-UI.t;
   if(AC)scheduleAudio(UI.t,dest||AC.destination);
   setPlayIcon();
   const tick=()=>{
@@ -792,13 +797,40 @@ function play(from,to,dest){
     UI.t=performance.now()/1000-T0;
     if(UI.t>=UI.endAt){UI.t=UI.endAt;pause();if(UI.onEnd)UI.onEnd();return;}
     const loc=locate(UI.t);if(loc.i!==UI.scene){UI.scene=loc.i;onSceneChanged();}
+    if(!UI.rec&&UI.t-UI.t0>4&&!(UI.loud>.01)&&!UI.warned&&P.scenes.some(s=>s.lines.some(l=>l.audio&&l.audio.buf))){UI.warned=true;toast('Aucun son ne sort : monte le volume ou désactive le mode silencieux de l\'iPhone.');}
     renderAt(UI.t);updateTransport();rafId=requestAnimationFrame(tick);
   };
   rafId=requestAnimationFrame(tick);
 }
 function pause(){UI.playing=false;cancelAnimationFrame(rafId);stopAudio();setPlayIcon();draw();}
 function seek(t){UI.t=clamp(t,0,totalDur());const loc=locate(UI.t);if(loc.i!==UI.scene){UI.scene=loc.i;onSceneChanged();}draw();}
+/* Pistes audio sous la vidéo : voix, bruitages, musique/ambiances (plein = son présent, pointillé = pas encore de son) */
+function drawTracks(){
+  const c=$('#tracks');if(!c)return;const dpr=Math.min(2,window.devicePixelRatio||1),w=c.clientWidth,h=c.clientHeight;if(!w)return;
+  if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const cs=getComputedStyle(document.documentElement),muted=cs.getPropertyValue('--muted').trim(),line=cs.getPropertyValue('--line').trim();
+  const L=64,tot=totalDur(),X=t=>L+(w-L-4)*clamp(t/Math.max(.01,tot),0,1),rh=(h-4)/3,st=startsOf();
+  g.font='700 10px Nunito,system-ui,sans-serif';g.textBaseline='middle';
+  ['Voix','Bruitages','Musique'].forEach((n,r)=>{g.fillStyle=muted;g.fillText(n,4,2+rh*r+rh/2);g.fillStyle=line;g.fillRect(L,2+rh*r+rh/2-.5,w-L-4,1);});
+  const seg=(r,t0,t1,col,ok)=>{const x=X(t0),x2=Math.max(x+2,X(t1)),y=3+rh*r,hh=rh-2;
+    if(ok){g.fillStyle=col;g.fillRect(x,y,x2-x,hh);}else{g.strokeStyle=col;g.setLineDash([3,2]);g.strokeRect(x+.5,y+.5,Math.max(1,x2-x-1),hh-1);g.setLineDash([]);}};
+  P.scenes.forEach((s,i)=>{const s0=st[i],s1=s0+sceneDur(s);
+    if(s.music&&LIB['m-'+s.music])seg(2,s0,s1,'rgba(130,110,230,.45)',true);
+    (s.sfx||[]).forEach(x=>{const ok=!!(x.audio&&x.audio.buf);if(x.loop)seg(2,s0+x.t,s1,'rgba(60,160,110,.5)',ok);else seg(1,s0+x.t,s0+x.t+(ok?x.audio.buf.duration:1),'#e6a23c',ok);});
+    s.lines.forEach(l=>seg(0,s0+l.t,s0+l.t+lineDur(l),SPCOL[l.who]||'#a9b6dd',!!(l.audio&&l.audio.buf)));
+  });
+  if(CARD()&&LIB['j-intro'])seg(1,.15,.15+LIB['j-intro'].duration,'#c77dff',true);
+  if(OUTRO()&&LIB['j-fin'])seg(1,tot-OUTRO()+.25,tot-OUTRO()+.25+LIB['j-fin'].duration,'#c77dff',true);
+  /* niveau sonore en direct */
+  g.fillStyle=line;g.fillRect(L-9,3,5,h-6);
+  if(UI.playing&&UI.an){const a=new Float32Array(UI.an.fftSize);UI.an.getFloatTimeDomainData(a);let q=0;for(let k=0;k<a.length;k++)q+=a[k]*a[k];
+    const lv=Math.min(1,Math.sqrt(q/a.length)*5);g.fillStyle='#2a9456';g.fillRect(L-9,3+(h-6)*(1-lv),5,(h-6)*lv);
+    UI.loud=Math.max(UI.loud||0,lv);}
+  g.fillStyle='#e66f12';g.fillRect(X(UI.t)-1,0,2,h);
+}
 function updateTransport(){
+  drawTracks();
   const tot=totalDur();
   $('#time').textContent=fmt(UI.t)+' / '+fmt(tot);
   const sc=$('#scrub');if(document.activeElement!==sc)sc.value=Math.round(UI.t/Math.max(.01,tot)*1000);
@@ -1747,11 +1779,13 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setT
 $('#btnPlay').addEventListener('click',()=>{if(UI.playing)pause();else play();});
 $('#btnRestart').addEventListener('click',()=>{pause();seek(0);});
 $('#btnTopExport').addEventListener('click',()=>{setTab('export');$('#body').scrollIntoView({behavior:'smooth',block:'start'});});
+$('#tracks').addEventListener('pointerdown',e=>{const c=e.currentTarget,r=c.getBoundingClientRect(),x=e.clientX-r.left;if(x<64)return;if(UI.playing)pause();seek((x-64)/(r.width-68)*totalDur());});
+window.addEventListener('resize',()=>drawTracks());
 $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.value/1000*totalDur());});
 setPlayIcon();
 const fontsReady=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('600 36px "Baloo 2"'),document.fonts.load('400 16px Nunito')]).catch(()=>{}):Promise.resolve();
 (async()=>{
-  await restore();seedEpisodes();refreshTpl();scheduleSave();initVoices();loadLib();
+  await restore();seedEpisodes();refreshTpl();scheduleSave();initVoices();loadLib().then(()=>draw());
   UI.scene=0;UI.t=startsOf()[0]+restLocal(P.scenes[0]);
   renderPanels();draw();
   fontsReady.then(()=>draw());
