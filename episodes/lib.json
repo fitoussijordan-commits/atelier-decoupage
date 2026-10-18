@@ -1,0 +1,114 @@
+{
+ "lines": [],
+ "sfx": [
+  {
+   "key": "m-joyeuse",
+   "text": "cheerful playful kids cartoon background music, ukulele, glockenspiel and soft hand claps, light and bouncy, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "m-calme",
+   "text": "gentle calm kids cartoon background music, soft acoustic guitar and celesta, warm and cozy, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "m-triste",
+   "text": "soft sad kids cartoon background music, slow gentle piano and soft strings, tender, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "m-suspense",
+   "text": "light playful suspense music for a kids cartoon, tiptoe pizzicato strings and soft bassoon, curious, not scary, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "m-nuit",
+   "text": "soft dreamy lullaby, music box and warm pads, calm and magical, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "m-fete",
+   "text": "happy upbeat celebration music for a kids cartoon, ukulele, whistling and hand claps, instrumental, seamless loop",
+   "dur": 22,
+   "loop": true
+  },
+  {
+   "key": "j-intro",
+   "text": "short cheerful cartoon intro jingle for a kids show, ukulele and glockenspiel flourish ending with a bright chime",
+   "dur": 4,
+   "loop": false
+  },
+  {
+   "key": "j-fin",
+   "text": "short happy cartoon ending jingle, playful xylophone run ending with a cute ta-da",
+   "dur": 3.5,
+   "loop": false
+  },
+  {
+   "key": "pas",
+   "text": "soft cute cartoon footsteps of a small animal walking on grass, steady light steps",
+   "dur": 2,
+   "loop": true
+  },
+  {
+   "key": "course",
+   "text": "fast light cartoon footsteps of a small animal running, pitter patter",
+   "dur": 2,
+   "loop": true
+  },
+  {
+   "key": "saut",
+   "text": "cartoon jump boing spring sound, cute and bouncy",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "rebond",
+   "text": "small soft cartoon boing, gentle and cute",
+   "dur": 0.6,
+   "loop": false
+  },
+  {
+   "key": "pop",
+   "text": "cute cartoon pop bubble appear sound",
+   "dur": 0.5,
+   "loop": false
+  },
+  {
+   "key": "whoosh",
+   "text": "quick soft cartoon whoosh swish",
+   "dur": 0.8,
+   "loop": false
+  },
+  {
+   "key": "tremble",
+   "text": "comic cartoon shiver trembling wobble sound, brrr",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "surprise",
+   "text": "cartoon surprise sting, quick rising slide whistle",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "joie",
+   "text": "cute cartoon happy sparkle twinkle",
+   "dur": 1,
+   "loop": false
+  },
+  {
+   "key": "transition",
+   "text": "soft gentle magical whoosh transition with light chimes",
+   "dur": 1.5,
+   "loop": false
+  }
+ ],
+ "voices": {}
+}

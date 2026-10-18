@@ -3,7 +3,7 @@
 //   GET /api/batch?token=GEN_TOKEN&ep=nuit&op=status    -> ce qui reste à générer
 //   GET /api/batch?token=GEN_TOKEN&ep=nuit&op=run&limit=5 -> génère jusqu'à 5 sons manquants
 const { okEp, readManifest, writeManifest, put } = require('../lib/common');
-const EPISODES = { nuit: require('../episodes/nuit.json'), cerf: require('../episodes/cerf.json') };
+const EPISODES = { nuit: require('../episodes/nuit.json'), cerf: require('../episodes/cerf.json'), lib: require('../episodes/lib.json') };
 const API = 'https://api.elevenlabs.io/v1';
 
 module.exports = async (req, res) => {
@@ -17,6 +17,11 @@ module.exports = async (req, res) => {
       if (!r.ok) return res.status(200).json({ error: 'elevenlabs ' + r.status, keyLen: String(key||'').length, body: (await r.text()).slice(0, 400) });
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
+    }
+    if (op === 'credits') {
+      const r = await fetch(API + '/user/subscription', { headers: { 'xi-api-key': key } });
+      const j = await r.json().catch(() => ({}));
+      return res.status(200).json({ status: r.status, tier: j.tier, used: j.character_count, limit: j.character_limit, reset: j.next_character_count_reset_unix, err: j.detail });
     }
     if (op === 'library') {
       const q = new URLSearchParams({ page_size: '30', language: 'fr', sort: 'trending' });
