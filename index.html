@@ -701,7 +701,7 @@ function renderStrip(){
 function loadEpisode(id){
   const e=allEps().find(x=>x.id===id);if(!e)return;
   pause();EPS=allEps();
-  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.scenes=e.scenes;
+  P.eid=e.id;P.name=e.name;P.tpl=e.tpl;P.scenes=e.scenes;UI.last=null;
   UI.scene=0;UI.actorId=null;UI.t=startsOf()[0]+restLocal(P.scenes[0]);UI.confirmDelEp=false;
   scheduleSave();renderPanels();draw();syncAudio();
 }
@@ -1248,7 +1248,7 @@ async function saveBlob(blob,name){
   }
 }
 async function exportVideo(sceneOnly){
-  if(UI.rec)return;pause();
+  if(UI.rec)return;pause();UI.last=null;
   const mime=pickMime();if(!mime){toast('Format vidéo non pris en charge.');return;}
   ensureAudio();
   let dest=null,keep=null;
