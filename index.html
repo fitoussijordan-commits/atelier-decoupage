@@ -1750,7 +1750,7 @@ function loadMuxer(){if(window.Mp4Muxer)return Promise.resolve();if(MUXP)return 
 async function wcSupport(){
   if(!window.VideoEncoder||!window.AudioEncoder||!window.VideoFrame||!window.AudioData||!window.OfflineAudioContext)return null;
   const ok=async(E,c)=>{try{return (await E.isConfigSupported(c)).supported;}catch(e){return false;}};
-  let vc=null;for(const c of ['avc1.42E028','avc1.4D0028','avc1.640028'])if(await ok(VideoEncoder,{codec:c,width:W,height:H,bitrate:4e6,framerate:30})){vc=c;break;}
+  let vc=null;for(const c of ['avc1.42E028','avc1.4D0028','avc1.640028'])if(await ok(VideoEncoder,{codec:c,width:W,height:H,bitrate:2.5e6,framerate:30})){vc=c;break;}
   if(!vc)return null;
   for(const [c,m] of [['mp4a.40.2','aac'],['opus','opus']])if(await ok(AudioEncoder,{codec:c,sampleRate:48000,numberOfChannels:2,bitrate:128000}))return{vc,ac:c,am:m};
   return null;
@@ -1768,7 +1768,7 @@ async function exportWC(sceneOnly,sup){
   const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:sup.vm||'avc',width:W,height:H,frameRate:FPS},audio:{codec:sup.am,numberOfChannels:2,sampleRate:SR},fastStart:'in-memory',firstTimestampBehavior:'offset'});
   let err=null;
   const venc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{err=e;}});
-  venc.configure({codec:sup.vc,width:W,height:H,bitrate:4e6,framerate:FPS,latencyMode:'quality'});
+  venc.configure({codec:sup.vc,width:W,height:H,bitrate:2.5e6,framerate:FPS,latencyMode:'quality'});
   const aenc=new AudioEncoder({output:(c,m)=>muxer.addAudioChunk(c,m),error:e=>{err=e;}});
   aenc.configure({codec:sup.ac,sampleRate:SR,numberOfChannels:2,bitrate:128000});
   const L=mix.getChannelData(0),R=mix.getChannelData(1),CH=1024;
