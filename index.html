@@ -1263,10 +1263,16 @@ async function exportVideo(sceneOnly){
   const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6e6}),chunks=[];
   rec.ondataavailable=ev=>{if(ev.data&&ev.data.size)chunks.push(ev.data);};
   UI.rec={cancel:false};renderBody();
-  const finished=new Promise(res=>{rec.onstop=res;});
-  UI.onEnd=()=>{UI.onEnd=null;try{rec.stop();}catch(e){}};
+  let doneRes;const finished=new Promise(res=>{doneRes=res;rec.onstop=res;});
+  /* Safari iPhone : onstop n'arrive parfois jamais. On force la fin si rien ne se passe. */
+  const forceStop=()=>{
+    try{if(rec.state!=='inactive')rec.stop();}catch(e){}
+    setTimeout(()=>{try{rec.requestData();}catch(e){}stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});},1500);
+    setTimeout(()=>doneRes(),4000);
+  };
+  UI.onEnd=()=>{UI.onEnd=null;forceStop();};
   const bar=()=>{const el2=$('#recbar');if(el2)el2.style.width=Math.round(clamp((UI.t-from)/Math.max(.1,to-from),0,1)*100)+'%';};
-  const iv=setInterval(()=>{bar();if(UI.rec&&UI.rec.cancel){clearInterval(iv);UI.onEnd=null;try{rec.stop();}catch(e){}}},200);
+  const iv=setInterval(()=>{bar();if(UI.rec&&UI.rec.cancel){clearInterval(iv);UI.onEnd=null;forceStop();}},200);
   toast('Enregistrement en cours…');
   rec.start(500);
   play(from,to,dest);
