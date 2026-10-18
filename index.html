@@ -1176,6 +1176,27 @@ function pickMime(){
   const c=['video/mp4;codecs=avc1,mp4a.40.2','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
   return c.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
 }
+
+/* Textes prêts à coller dans YouTube */
+const YT_META={
+  nuit:{title:'Roux a peur du noir | Dessin animé pour enfants',
+    desc:"Ce soir, Roux dort chez son ami Caramel… mais quand la nuit tombe, il n'ose pas dire qu'il a peur du noir. Avec l'aide d'Olympe la chouette, il découvre que dire sa peur la rend plus petite.\n\nUne histoire douce sur la peur du noir, le courage et l'amitié, pour les enfants de 3 à 7 ans.\n\n#dessinanimé #enfants #peurdunoir #histoire",
+    tags:'dessin animé, enfants, peur du noir, histoire du soir, animaux, amitié, courage, renard, chouette'},
+  cerf:{title:'Roux déchire le cerf-volant | Dessin animé pour enfants',
+    desc:"Pistache prête son cerf-volant rouge à Roux. Un coup de vent, et il se déchire. Roux garde son secret… jusqu'à ce qu'il n'en puisse plus. Dire la vérité, ça fait peur, mais après, on se sent léger !\n\nUne histoire sur l'honnêteté et l'amitié, pour les enfants de 3 à 7 ans.\n\n#dessinanimé #enfants #honnêteté #histoire",
+    tags:'dessin animé, enfants, vérité, honnêteté, histoire, animaux, amitié, renard, lapin'}
+};
+const ytMeta=()=>YT_META[P.tpl]||{title:P.name||'Mon épisode',desc:'',tags:''};
+async function copyText(t){try{await navigator.clipboard.writeText(t);toast('Copié.');}catch(e){toast('Copie impossible : sélectionne le texte à la main.');}}
+async function shareVideo(){
+  const v=UI.last;if(!v)return;
+  const file=new File([v.blob],v.name,{type:v.blob.type});
+  const m=ytMeta();
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:m.title,text:m.title});return;}
+  }catch(e){if(e&&e.name==='AbortError')return;}
+  toast('Le partage direct n\'est pas disponible ici : utilise « Enregistrer le fichier ».');
+}
 function tabExport(b){
   const supported=!!(window.MediaRecorder&&cv.captureStream);
   b.append(
@@ -1185,6 +1206,16 @@ function tabExport(b){
       el('button',{class:'btn',type:'button',disabled:!supported||!!UI.rec,onclick:()=>exportVideo(true)},'Exporter cette scène'),
       UI.rec?el('button',{class:'btn danger',type:'button',onclick:()=>{UI.rec.cancel=true;pause();}},'Annuler'):null),
     el('div',{class:'bar','aria-hidden':'true'},el('i',{id:'recbar'})),
+    UI.last?(()=>{const m=ytMeta(),v=UI.last;
+      const f=(lbl,val,rows)=>{const i=rows?el('textarea',{rows}):el('input',{type:'text'});i.value=val;
+        return el('label',{class:'fld'},el('span',{text:lbl}),i,el('button',{class:'btn sm',type:'button',onclick:()=>copyText(i.value)},'Copier'));};
+      return el('div',{class:'card'},
+        el('h3',{text:'Vidéo prête : '+v.name+' ('+(v.blob.size/1048576).toFixed(1)+' Mo)'}),
+        el('div',{class:'row'},
+          el('button',{class:'btn primary',type:'button',onclick:shareVideo},'Envoyer vers YouTube…'),
+          el('button',{class:'btn',type:'button',onclick:()=>saveBlob(v.blob,v.name)},'Enregistrer le fichier')),
+        el('p',{class:'hint',text:'« Envoyer vers YouTube… » ouvre le menu de partage de l\'iPhone : choisis YouTube, puis colle le titre et la description ci-dessous.'}),
+        f('Titre',m.title,0),f('Description',m.desc,6),f('Tags',m.tags,2));})():null,
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
     el('div',{class:'card'},
       el('h3',{text:'Épisodes'}),
@@ -1245,8 +1276,8 @@ async function exportVideo(sceneOnly){
   if(cancelled||!chunks.length){toast('Export annulé.');renderBody();return;}
   const ext=mime.startsWith('video/mp4')?'mp4':'webm';
   const blob=new Blob(chunks,{type:mime.split(';')[0]});
-  renderBody();
-  await saveBlob(blob,(sceneOnly?'scene-'+(UI.scene+1):'episode')+'.'+ext);
+  UI.last={blob,name:(sceneOnly?'scene-'+(UI.scene+1):(P.tpl||'episode'))+'.'+ext};
+  renderBody();toast('Vidéo prête. Appuie sur « Envoyer vers YouTube… » ou « Enregistrer le fichier ».');
 }
 
 /* ================= Glisser un acteur sur la scène ================= */
