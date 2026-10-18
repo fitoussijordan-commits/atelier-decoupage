@@ -1932,7 +1932,8 @@ async function exportWC(sceneOnly,sup){
   const AAC_ASC=new Uint8Array([0x11,0x90]);
   const aenc=new AudioEncoder({output:(c,m)=>{aChunks++;
     if(m&&m.decoderConfig&&m.decoderConfig.description)aDesc=true;
-    else if(sup.am==='aac'&&aChunks===1)m=Object.assign({},m||{},{decoderConfig:Object.assign({codec:'mp4a.40.2',sampleRate:SR,numberOfChannels:2},(m&&m.decoderConfig)||{},{description:AAC_ASC})});
+    /* Safari donne parfois un descripteur MP4 complet au lieu de l'en-tête AAC brut : on met toujours le bon (AAC-LC 48 kHz stéréo) */
+    if(sup.am==='aac'&&m&&m.decoderConfig||sup.am==='aac'&&aChunks===1)m=Object.assign({},m||{},{decoderConfig:Object.assign({},(m&&m.decoderConfig)||{},{codec:'mp4a.40.2',sampleRate:SR,numberOfChannels:2,description:AAC_ASC})});
     muxer.addAudioChunk(c,m);},error:e=>{err=e;}});
   aenc.configure({codec:sup.ac,sampleRate:SR,numberOfChannels:2,bitrate:128000});
   const L=mix.getChannelData(0),R=mix.getChannelData(1),CH=1024;
