@@ -1,1 +1,3 @@
-{ "functions": { "api/batch.js": { "maxDuration": 60 }, "api/audio.js": { "maxDuration": 30 } } }
+{ "functions": { "api/batch.js": { "maxDuration": 60 }, "api/audio.js": { "maxDuration": 30 } },
+  "headers": [ { "source": "/", "headers": [ { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" } ] },
+               { "source": "/index.html", "headers": [ { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" } ] } ] }
