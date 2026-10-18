@@ -95,9 +95,34 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .pend .card img{height:80px;object-fit:contain;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 50%/14px 14px;border-radius:8px}
 .hide{display:none!important}
 /* Écran d'export : la scène disparaît, l'export prend toute la page */
-body.exporting .stage-col{position:absolute!important;left:-99999px;top:0;width:640px;visibility:hidden}
-body.exporting .app{grid-template-columns:minmax(0,1fr);max-width:720px;margin:0 auto}
-body.exporting .tabs{display:none}
+/* Navigation en bas, comme une app */
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line);padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+.nav .tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;border:0;background:none;font:700 .72rem var(--font-b);color:var(--muted);min-height:56px}
+.nav .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav .tab[aria-selected="true"]{color:var(--accent)}
+.status{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:61;max-width:min(92vw,560px);background:var(--fg);color:var(--bg);border-radius:12px;padding:9px 14px;font-size:.85rem;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s}
+.status.show{opacity:1}
+.top .epbar{flex:1;min-width:0;justify-content:flex-end}
+.top .epbar select{max-width:100%}
+/* La scène n'apparaît que là où elle sert */
+body.t-write .stage-col,body.t-export .stage-col{position:absolute!important;left:-99999px;top:0;width:640px;visibility:hidden}
+body.t-write .app,body.t-export .app{grid-template-columns:minmax(0,1fr);max-width:760px;margin:0 auto}
+body.t-voices .stage-col{position:static}
+@media (max-width:900px){.stagewrap{width:min(100%,calc(36vh*16/9));margin:0 auto}}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel2);padding:9px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--sel-bg);color:var(--fg)}
+details.sec{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+details.sec>summary{cursor:pointer;list-style:none;padding:13px 14px;font-family:var(--font-d);font-weight:700;font-size:1.02rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:'›';font-size:1.4rem;color:var(--muted);transform:rotate(90deg);transition:transform .15s}
+details.sec:not([open])>summary::after{transform:rotate(0)}
+details.sec>.secb{padding:0 12px 12px;display:flex;flex-direction:column;gap:10px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.steps button{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:8px 6px;text-align:left;font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.steps button b{font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.steps button.done{border-color:var(--ok)}
 .backbar{display:flex;align-items:center;gap:10px}
 @media (max-width:900px){
   .app{grid-template-columns:minmax(0,1fr);gap:10px}
@@ -107,8 +132,8 @@ body.exporting .tabs{display:none}
 </style>
 
 <header class="top">
-  <div class="brand"><h1>Atelier Découpage</h1><span>Persos, décors, voix, vidéo</span></div>
-  <button class="btn primary" id="btnTopExport" type="button">Exporter</button>
+  <div class="brand"><h1>Atelier</h1></div>
+  <div class="epbar" id="epbar"></div>
 </header>
 
 <div class="app">
@@ -121,23 +146,21 @@ body.exporting .tabs{display:none}
       <div class="time" id="time">0:00.0</div>
     </div>
     <canvas id="tracks" aria-label="Pistes audio : voix, bruitages, musique"></canvas>
-    <div class="status" id="status" role="status" aria-live="polite"></div>
-    <div class="epbar" id="epbar"></div>
     <div class="strip" id="strip"></div>
   </section>
 
   <section class="panel" aria-label="Réglages">
-    <div class="tabs" role="tablist" id="tabs">
-      <button class="tab" role="tab" data-tab="write" id="tab-write" type="button">Écrire</button>
-      <button class="tab" role="tab" data-tab="scene" id="tab-scene" type="button">Scène</button>
-      <button class="tab" role="tab" data-tab="actors" id="tab-actors" type="button">Acteurs</button>
-      <button class="tab" role="tab" data-tab="voices" id="tab-voices" type="button">Voix</button>
-      <button class="tab" role="tab" data-tab="lib" id="tab-lib" type="button">Biblio</button>
-      <button class="tab" role="tab" data-tab="export" id="tab-export" type="button">Export</button>
-    </div>
     <div class="tabbody" id="body" role="tabpanel"></div>
   </section>
 </div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+    <nav class="nav" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="write" id="tab-write" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg><span>Écrire</span></button>
+      <button class="tab" role="tab" data-tab="scene" id="tab-scene" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/></svg><span>Scène</span></button>
+      <button class="tab" role="tab" data-tab="actors" id="tab-actors" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Persos</span></button>
+      <button class="tab" role="tab" data-tab="voices" id="tab-voices" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span>Voix</span></button>
+      <button class="tab" role="tab" data-tab="export" id="tab-export" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"/></svg><span>Publier</span></button>
+    </nav>
 <input type="file" id="fileSheets" accept="image/*" multiple class="hide">
 <input type="file" id="fileAudioMulti" accept="audio/*" multiple class="hide">
 <input type="file" id="fileAudioOne" accept="audio/*" class="hide">
@@ -743,10 +766,13 @@ function scheduleAudio(from,dest,ctx){
     g.gain.linearRampToValueAtTime(0,w1);
     src.start(w0,(Math.max(t0,from)-t0)%buf.duration);src.stop(w1+.05);live.push(src);
   };
+  /* voix : plus présentes (un peu plus fortes, sans grave boueux, aigus de présence) */
+  const vb=ctx.createGain();vb.gain.value=1.35;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=90;
+  const pr=ctx.createBiquadFilter();pr.type='peaking';pr.frequency.value=3200;pr.Q.value=.9;pr.gain.value=3;vb.connect(hp);hp.connect(pr);pr.connect(comp);
   const st=startsOf(),iv=[];
   P.scenes.forEach((s,i)=>{
     const s0=st[i],s1=s0+sceneDur(s);
-    s.lines.forEach(l=>{if(!l.audio||!l.audio.buf)return;one(l.audio.buf,s0+l.t,1);iv.push([s0+l.t,s0+l.t+l.audio.buf.duration]);});
+    s.lines.forEach(l=>{if(!l.audio||!l.audio.buf)return;one(l.audio.buf,s0+l.t,1,vb);iv.push([s0+l.t,s0+l.t+l.audio.buf.duration]);});
     (s.sfx||[]).forEach(x=>{if(!x.audio||!x.audio.buf)return;const vol=x.vol==null?.6:x.vol;
       if(x.loop)loop(x.audio.buf,s0+x.t,s1,vol,bed,1);else one(x.audio.buf,s0+x.t,vol);});
     if(!CFG.autoSfx)return;
@@ -779,7 +805,7 @@ function scheduleAudio(from,dest,ctx){
   /* ducking : la musique et les ambiances baissent pendant que quelqu'un parle */
   iv.sort((p,q)=>p[0]-q[0]);const mg=[];
   for(const v of iv){const L=mg[mg.length-1];if(L&&v[0]-L[1]<.7)L[1]=Math.max(L[1],v[1]);else mg.push([...v]);}
-  const DK=.5;bed.gain.setValueAtTime(1,now);
+  const DK=.35;bed.gain.setValueAtTime(1,now);
   for(const [a,b] of mg){
     if(b+.4<=from)continue;
     if(a-.2>from){bed.gain.setValueAtTime(1,at(a-.2));bed.gain.linearRampToValueAtTime(DK,at(a));}else bed.gain.setValueAtTime(DK,now);
@@ -848,7 +874,7 @@ function updateTransport(){
   $('#time').textContent=fmt(UI.t)+' / '+fmt(tot);
   const sc=$('#scrub');if(document.activeElement!==sc)sc.value=Math.round(UI.t/Math.max(.01,tot)*1000);
 }
-function toast(msg){const s=$('#status');s.textContent=msg;}
+let toastT=0;function toast(msg){const s=$('#status');s.textContent=msg||'';s.classList.toggle('show',!!msg);clearTimeout(toastT);if(msg)toastT=setTimeout(()=>{if(!UI.rec&&!VOICE.busy)s.classList.remove('show');},5000);}
 
 /* ================= Sauvegarde locale ================= */
 const IDB={
@@ -899,7 +925,7 @@ async function restore(){
 }
 
 /* ================= Interface ================= */
-function setTab(t){UI.tab=t;document.body.classList.toggle('exporting',t==='export');renderPanels();if(t==='export')window.scrollTo(0,0);}
+function setTab(t){UI.tab=t;for(const k of ['write','scene','actors','voices','lib','export'])document.body.classList.toggle('t-'+k,k===t);renderPanels();window.scrollTo(0,0);}
 function onSceneChanged(){UI.actorId=null;renderStrip();if(UI.tab!=='lib'&&UI.tab!=='export'&&UI.tab!=='write')renderBody();}
 function changed(quiet){scheduleSave();draw();if(!quiet){renderStrip();}}
 function selectScene(i){
@@ -945,7 +971,7 @@ function renderEpbar(){
     el('button',{class:'btn sm',type:'button',onclick:()=>newEpisode(false)},'+ Épisode'));
 }
 function renderPanels(){renderEpbar();
-  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===UI.tab)));
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===(UI.tab==='lib'?'actors':UI.tab))));
   $('#body').setAttribute('aria-labelledby','tab-'+UI.tab);
   renderStrip();renderBody();
 }
@@ -1006,8 +1032,10 @@ function addActor(id){
   const a={id:uid(),spr:id,x:clamp(260+(s.actors.length%5)*190,140,W-140),y:face?H+10:(prop&&/cerf-volant/.test(id)?320:GROUND),s:face?1.3:1,flip:false,z:/cerf-volant/.test(id)?1000:0,acts:[]};
   s.actors.push(a);UI.actorId=a.id;scheduleSave();draw();setTab('actors');
 }
+const persosSeg=()=>el('div',{class:'seg'},el('button',{type:'button','aria-pressed':String(UI.tab==='actors'),onclick:()=>setTab('actors')},'Sur la scène'),el('button',{type:'button','aria-pressed':String(UI.tab==='lib'),onclick:()=>setTab('lib')},'Bibliothèque'));
 function tabActors(b){
   const s=curScene(),a=curActor();
+  b.append(persosSeg());
   b.append(el('div',{class:'actors'},
     s.actors.map(x=>el('button',{class:'actor',type:'button','aria-pressed':String(!!(a&&x.id===a.id)),onclick:()=>{UI.actorId=x.id;renderBody();}},
       el('img',{src:SPR[x.spr]?SPR[x.spr].src:'',alt:''}),el('b',{text:SPR[x.spr]?CH[SPR[x.spr].group].name:''}),el('span',{text:SPR[x.spr]?SPR[x.spr].label.replace(/-/g,' '):x.spr}))),
@@ -1199,7 +1227,7 @@ function designCard(){
       toast('Voix de '+D.who+' enregistrée. Regénère ses répliques (« Tout l\'épisode »).');}
     catch(e){toast('Enregistrement impossible : '+String(e.message||e).slice(0,120));}
     D.busy=false;renderBody();};
-  return el('div',{class:'card'},el('h3',{text:'Créer une voix sur mesure'}),
+  return el('div',{class:'card'},
     el('p',{class:'hint',text:'Décris la voix, ElevenLabs en propose plusieurs. Écoute, puis choisis celle qui colle au personnage.'}),
     el('label',{class:'fld'},el('span',{text:'Personnage'}),who),
     el('label',{class:'fld'},el('span',{text:'Description de la voix'}),ta),
@@ -1218,34 +1246,37 @@ function voiceCard(s){
   P.voices=P.voices||{};
   const opts=[['','— choisir —'],...VOICE.list.map(v=>[v.id,v.name])];
   return [el('div',{class:'card'},
-    el('h3',{text:'Voix des personnages'}),
     el('div',{class:'grid2'},SPEAKERS.map(n=>el('label',{class:'fld'},el('span',{text:n}),selectEl(opts,P.voices[n]||'',v=>{P.voices[n]=v;scheduleSave();})))),
     el('label',{class:'fld'},el('span',{text:'Moteur de voix'}),selectEl((VOICE.models&&VOICE.models.length?VOICE.models:[{id:'eleven_multilingual_v2',name:'Multilingual v2'}]).map(m=>[m.id,m.name+(m.id===bestModel()?' (conseillé)':'')]),curModel(),v=>{CFG.voiceModel=v;scheduleSave();})),
     el('p',{class:'hint',text:curModel()==='eleven_v3'?'Ce moteur joue les émotions : l\'expression choisie sur une réplique (triste, surpris, rit…) change le ton de la voix.':'Astuce : le moteur v3 joue mieux les émotions des répliques.'}),
-    el('div',{class:'row'},
-      el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:()=>genLines(s.lines,s)},VOICE.busy?'Génération…':'Générer les voix de cette scène'),
-      el('button',{class:'btn',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const sc of P.scenes)await genLines(sc.lines,sc);}},'Tout l\'épisode'))),
+    ),
     designCard()];
 }
+const sec=(title,open,...kids)=>el('details',{class:'sec',open:!!open},el('summary',{text:title}),el('div',{class:'secb'},...kids));
 function tabVoices(b){
-  const s=curScene();
-  b.append(...[].concat(voiceCard(s)));
-  b.append(el('p',{class:'hint',text:'Une réplique = une ligne de texte affichée en sous-titre, et un fichier audio facultatif (par exemple généré avec ElevenLabs).'}));
-  s.lines.forEach((l,i)=>b.append(lineCard(s,l,i)));
-  b.append(el('div',{class:'row'},
-    el('button',{class:'btn',type:'button',onclick:()=>{
-      const last=s.lines[s.lines.length-1];
-      s.lines.push({id:uid(),who:last?last.who:'Roux',text:'',t:last?+(last.t+lineDur(last)+.35).toFixed(2):.7,audio:null});scheduleSave();renderBody();}},'+ Réplique'),
-    el('button',{class:'btn',type:'button',onclick:()=>{autoTimes(s);scheduleSave();renderBody();draw();}},'Recalculer les temps'),
-    el('button',{class:'btn',type:'button',onclick:()=>$('#fileAudioMulti').click()},'Charger plusieurs audios')));
-  b.append(el('p',{class:'hint',text:'« Charger plusieurs audios » associe les fichiers aux répliques dans l\'ordre alphabétique de leurs noms (L1, L2, L3…), puis recalcule les temps.'}));
-  s.sfx=s.sfx||[];
-  b.append(el('h3',{text:'Bruitages de la scène'}),
-    el('p',{class:'hint',text:'Un bruitage = une description en anglais (c\'est ce que comprend le mieux ElevenLabs) placée à un instant précis. Il est mixé avec les voix et inclus dans la vidéo.'}));
-  s.sfx.forEach((x,i)=>b.append(sfxCard(s,x,i)));
-  b.append(el('div',{class:'row'},
-    el('button',{class:'btn',type:'button',onclick:()=>{s.sfx.push({id:uid(),t:+(UI.t-startsOf()[UI.scene]).toFixed(1)>0?+(UI.t-startsOf()[UI.scene]).toFixed(1):0,text:'',dur:0,vol:.6,audio:null});scheduleSave();renderBody();}},'+ Bruitage'),
-    VOICE.ok&&!VOICE.locked&&s.sfx.some(x=>x.text&&!x.audio)?el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const x of s.sfx)if(x.text&&!x.audio)await genSfx(x);}},'Générer ceux qui manquent'):null));
+  const s=curScene();s.sfx=s.sfx||[];
+  const vc=[].concat(voiceCard(s));
+  const missing=SPEAKERS.filter(n=>s.lines.some(l=>l.who===n)&&!(P.voices||{})[n]);
+  const canGen=VOICE.ok&&!VOICE.locked;
+  b.append(
+    canGen?el('div',{class:'row'},
+      el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:()=>genLines(s.lines,s)},VOICE.busy?'Génération…':'Générer les voix de cette scène'),
+      el('button',{class:'btn',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const sc of P.scenes)await genLines(sc.lines,sc);}},'Tout l\'épisode')):null,
+    sec(`Répliques · ${s.name||'scène'}`,true,
+      ...s.lines.map((l,i)=>lineCard(s,l,i)),
+      el('div',{class:'row'},
+        el('button',{class:'btn',type:'button',onclick:()=>{const last=s.lines[s.lines.length-1];
+          s.lines.push({id:uid(),who:last?last.who:'Roux',text:'',t:last?+(last.t+lineDur(last)+.35).toFixed(2):.7,audio:null});scheduleSave();renderBody();}},'+ Réplique'),
+        el('button',{class:'btn',type:'button',onclick:()=>{autoTimes(s);scheduleSave();renderBody();draw();}},'Recalculer les temps'),
+        el('button',{class:'btn',type:'button',onclick:()=>$('#fileAudioMulti').click()},'Charger des audios'))),
+    sec('Voix des personnages et moteur'+(missing.length?' · à régler':''),!canGen||missing.length>0||VOICE.locked,vc[0]),
+    vc[1]?sec('Créer une voix sur mesure',false,vc[1]):null,
+    sec(`Bruitages de la scène (${s.sfx.length})`,false,
+      el('p',{class:'hint',text:'Une description en anglais, placée à un instant précis. Mixée avec les voix dans la vidéo.'}),
+      ...s.sfx.map((x,i)=>sfxCard(s,x,i)),
+      el('div',{class:'row'},
+        el('button',{class:'btn',type:'button',onclick:()=>{const lt=+(UI.t-startsOf()[UI.scene]).toFixed(1);s.sfx.push({id:uid(),t:lt>0?lt:0,text:'',dur:0,vol:.6,audio:null});scheduleSave();renderBody();}},'+ Bruitage'),
+        canGen&&s.sfx.some(x=>x.text&&!x.audio)?el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const x of s.sfx)if(x.text&&!x.audio)await genSfx(x);}},'Générer ceux qui manquent'):null)));
 }
 async function genSfx(x){
   if(!(x.text||'').trim()){toast('Décris d\'abord le bruitage.');return;}
@@ -1473,10 +1504,18 @@ function createFromScript(txt){
   if(!ps.scenes.some(s=>s.lines.length)){UI.scriptErr=['Aucune réplique trouvée. Touche « Exemple » pour voir le format.',...ps.errors];renderBody();return;}
   const scenes=buildFromScript(ps),id=uid();
   EPS=allEps();EPS.push({id,name:ps.name||('Épisode '+(EPS.length+1)),scenes,yt:ps.yt});
-  UI.scriptErr=ps.errors;loadEpisode(id);UI.tab='write';renderPanels();
+  UI.scriptErr=ps.errors;loadEpisode(id);setTab('write');
   toast(`Épisode créé : ${scenes.length} scène${scenes.length>1?'s':''}.${ps.errors.length?' Certaines lignes n\'ont pas été comprises.':' Touche « Tout générer ».'}`);
 }
+function stepsBar(){
+  const lines=P.scenes.flatMap(s=>s.lines),hasAudio=lines.length&&lines.every(l=>l.audio);
+  return el('div',{class:'steps'},
+    el('button',{type:'button',class:P.scenes.some(s=>s.lines.length)?'done':'',onclick:()=>setTab('write')},el('b',{text:'1. Écrire'}),'l\'histoire'),
+    el('button',{type:'button',class:hasAudio?'done':'',onclick:()=>setTab('voices')},el('b',{text:'2. Voix'}),hasAudio?'prêtes':'à générer'),
+    el('button',{type:'button',class:UI.last?'done':'',onclick:()=>setTab('export')},el('b',{text:'3. Publier'}),'vidéo + YouTube'));
+}
 function tabWrite(b){
+  b.append(stepsBar());
   let draft='';try{draft=localStorage.getItem('atelier-script')||'';}catch(e){}
   const ta=el('textarea',{rows:16,placeholder:'Écris ton épisode ici… (touche « Exemple » pour voir le format)',style:'font-family:ui-monospace,Menlo,monospace;font-size:14px;min-height:300px'});ta.value=draft;
   const keep=()=>{try{localStorage.setItem('atelier-script',ta.value);}catch(e){}};
@@ -1524,6 +1563,7 @@ async function genAll(){
 
 /* ---- Onglet Bibliothèque ---- */
 function tabLib(b){
+  b.append(persosSeg());
   b.append(el('p',{class:'hint',text:'Touche un élément pour l\'ajouter à la scène « '+curScene().name+' ».'}));
   for(const g of GROUPS){
     const ids=Object.keys(SPR).filter(k=>SPR[k].group===g&&!isMouth(k));if(!ids.length)continue;
@@ -1992,7 +2032,6 @@ cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',end
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
 $('#btnPlay').addEventListener('click',()=>{if(UI.playing)pause();else play();});
 $('#btnRestart').addEventListener('click',()=>{pause();seek(0);});
-$('#btnTopExport').addEventListener('click',()=>setTab('export'));
 $('#tracks').addEventListener('pointerdown',e=>{const c=e.currentTarget,r=c.getBoundingClientRect(),x=e.clientX-r.left;if(x<64)return;if(UI.playing)pause();seek((x-64)/(r.width-68)*totalDur());});
 window.addEventListener('resize',()=>drawTracks());
 $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.value/1000*totalDur());});
@@ -2001,7 +2040,7 @@ const fontsReady=document.fonts&&document.fonts.load?Promise.all([document.fonts
 (async()=>{
   await restore();seedEpisodes();refreshTpl();scheduleSave();initVoices();loadLib().then(()=>draw());
   UI.scene=0;UI.t=startsOf()[0]+restLocal(P.scenes[0]);
-  renderPanels();draw();
+  setTab(UI.tab);draw();
   fontsReady.then(()=>draw());
 })();
 })();
