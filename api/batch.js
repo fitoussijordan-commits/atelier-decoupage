@@ -18,6 +18,14 @@ module.exports = async (req, res) => {
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
+    if (op === 'ttstest') {
+      const model = req.query.model || 'eleven_v3';
+      const body = { text: req.query.text || '[excited] Coucou ! Tu viens jouer avec moi ?', model_id: model, voice_settings: { stability: 0.5, similarity_boost: 0.8 } };
+      if (model !== 'eleven_multilingual_v2') body.language_code = 'fr';
+      const r = await fetch(`${API}/text-to-speech/${req.query.voice || 'Xgb3SR8idOHy8scGICeJ'}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const buf = Buffer.from(await r.arrayBuffer());
+      return res.status(200).json({ status: r.status, bytes: buf.length, err: r.ok ? null : buf.toString().slice(0, 300) });
+    }
     if (op === 'models') {
       const r = await fetch(API + '/models', { headers: { 'xi-api-key': key } });
       const j = await r.json().catch(() => []);

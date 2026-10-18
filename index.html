@@ -856,7 +856,7 @@ const IDB={
   async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
   async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
 };
-const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v}:null;
+const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v,local:a.local}:null;
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
   return{v:2,ex:1,cfg:CFG,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,yt:e.yt,scenes:serScenes(e.scenes)}))};
@@ -1083,7 +1083,7 @@ async function initVoices(){
     if(r.status===401){VOICE.ok=true;VOICE.locked=true;}
     else{
       if(!r.ok)throw new Error('no api');
-      const j=await r.json();VOICE.list=j.voices||[];VOICE.ok=true;VOICE.locked=false;
+      const j=await r.json();VOICE.list=j.voices||[];VOICE.models=j.models||[];VOICE.ok=true;VOICE.locked=false;
     }
     if(UI.tab==='voices')renderBody();
     syncAudio();
@@ -1111,6 +1111,7 @@ async function syncAudio(){
         if(!ref||ref.m.kind!==kind||ref.m.text!==o.text)ref=byTxt[kind+'|'+o.text+(kind==='voice'?'|'+vid:'')];
         if(!ref)continue;const m=ref.m;
         if(kind==='voice'&&m.v!==vid)continue;
+        if(o.audio&&o.audio.local)continue;
         if(o.audio&&(o.audio.v===undefined?kind==='sfx':o.audio.v===m.v))continue;
         const a=await fetch('/api/audio?ep='+encodeURIComponent(ref.ep)+'&key='+encodeURIComponent(ref.k),{headers:apiHeaders()});
         if(!a.ok)continue;
@@ -1129,12 +1130,13 @@ async function genLine(l,quiet){
   if(!vid){toast('Choisis d\'abord une voix pour '+l.who+'.');return false;}
   if(!(l.text||'').trim())return false;
   ensureAudio();
-  const r=await fetch('/api/tts',{method:'POST',headers:apiHeaders(),body:JSON.stringify({text:l.text,voiceId:vid})});
+  const q=ttsRequest(l);
+  const r=await fetch('/api/tts',{method:'POST',headers:apiHeaders(),body:JSON.stringify({text:q.text,voiceId:vid,model:q.model,settings:q.settings})});
   if(r.status===401){VOICE.locked=true;renderBody();toast('Mot de passe refusé.');return false;}
   if(!r.ok){toast('ElevenLabs a refusé la demande ('+r.status+').');return false;}
   const ab=await r.arrayBuffer();
   const buf=await AC.decodeAudioData(ab.slice(0));
-  l.audio={name:'ElevenLabs · '+l.who,ab,buf,dur:buf.duration,v:vid};
+  l.audio={name:'ElevenLabs · '+l.who,ab,buf,dur:buf.duration,v:vid,local:true};
   if(!quiet){scheduleSave();}
   return true;
 }
@@ -1148,6 +1150,64 @@ async function genLines(lines,s){
   }catch(e){toast('Erreur pendant la génération des voix.');}
   VOICE.busy=false;renderBody();draw();
 }
+/* ---- Moteur de voix, émotions et voix sur mesure ---- */
+const V3TAG={'tres-content':'[excited]',rit:'[laughs]',content:'[happy]',triste:'[sad]',inquiet:'[nervous]',effraye:'[scared]',surpris:'[surprised]',gene:'[shy]',reflechit:'[thoughtful]',colere:'[angry]',endormi:'[sleepy]'};
+function bestModel(){const ids=(VOICE.models||[]).map(m=>m.id);return ['eleven_v3','eleven_multilingual_v2'].find(m=>ids.includes(m))||ids.find(i=>/v4/.test(i)&&!/flash|turbo/.test(i))||'eleven_multilingual_v2';}
+const curModel=()=>CFG.voiceModel||bestModel();
+function lineExpr(l){
+  for(const s of P.scenes){const idx=s.lines.indexOf(l);if(idx<0)continue;
+    for(const a of s.actors){if(nameOf(a)!==l.who)continue;
+      for(const c of a.acts)if(c.type==='expr'&&(c.ln===idx||(c.ln==null&&Math.abs(c.t-l.t)<.6)))return c.expr;}}
+  return '';
+}
+function ttsRequest(l){
+  const model=curModel(),e=lineExpr(l);let text=l.text;
+  let settings={stability:.35,similarity_boost:.8,style:.55,use_speaker_boost:true};
+  if(model==='eleven_v3'){settings={stability:.5,similarity_boost:.8};if(V3TAG[e])text=V3TAG[e]+' '+text;}
+  else if(model!=='eleven_multilingual_v2')settings={stability:.4,similarity_boost:.8,style:.45,use_speaker_boost:true};
+  return{text,model,settings};
+}
+const VDESC={
+  Roux:"Petit garçon de 6 ans, voix aiguë et claire d'enfant, curieux, joyeux et plein d'énergie. Français de France, sans accent. Personnage de dessin animé pour jeunes enfants.",
+  Pistache:"Petite fille de 5 ans, voix d'enfant douce, aiguë et pétillante, très expressive. Français de France, sans accent. Personnage de dessin animé pour jeunes enfants.",
+  Caramel:"Petit garçon de 7 ans un peu rond, voix d'enfant chaleureuse et gentille, un peu lente, rire facile. Français de France, sans accent. Dessin animé pour enfants.",
+  Olympe:"Jeune femme sage et bienveillante, voix douce, posée et rassurante, comme une maîtresse d'école maternelle. Français de France, sans accent. Dessin animé pour enfants.",
+  Narrateur:"Conteuse chaleureuse, voix douce et enveloppante, rythme posé, ton d'histoire du soir pour enfants. Français de France, sans accent."
+};
+const VSAMPLE={
+  Roux:"Coucou ! Moi c'est Roux ! Tu viens jouer avec moi au parc ? On va faire la course jusqu'au grand chêne, et c'est moi qui vais gagner !",
+  Pistache:"Bonjour, je m'appelle Pistache ! Regarde mon cerf-volant rouge, il vole tout là-haut dans le ciel. Tu veux le tenir avec moi ? Fais bien attention !",
+  Caramel:"Salut, c'est moi, Caramel ! J'ai apporté des gâteaux au miel pour tout le monde. Hmm, ils sont trop bons ! On les partage ensemble ?",
+  Olympe:"Bonsoir les enfants. Je suis Olympe. Quand on a peur ou qu'on est triste, le mieux, c'est d'en parler à un ami. Ça rend le cœur plus léger.",
+  Narrateur:"Il était une fois, dans une jolie prairie, un petit renard nommé Roux. Ce matin-là, le soleil brillait et tous ses amis l'attendaient au parc."
+};
+function designCard(){
+  const D=UI.vd||(UI.vd={who:'Roux',desc:'',previews:[],busy:false});
+  const who=selectEl(SPEAKERS.map(n=>[n,n]),D.who,v=>{D.who=v;D.desc='';D.previews=[];renderBody();});
+  const ta=el('textarea',{rows:3});ta.value=D.desc||VDESC[D.who];ta.addEventListener('input',()=>{D.desc=ta.value;});
+  const play=b64=>{ensureAudio();const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    AC.decodeAudioData(u.buffer).then(buf=>{stopAudio();const src=AC.createBufferSource();src.buffer=buf;src.connect(AC.destination);src.start();live.push(src);}).catch(()=>toast('Écoute impossible.'));};
+  const propose=async()=>{D.busy=true;D.previews=[];renderBody();toast('Création de voix… (environ 20 s)');
+    try{const r=await fetch('/api/voicedesign',{method:'POST',headers:apiHeaders(),body:JSON.stringify({op:'design',description:ta.value,text:VSAMPLE[D.who],model:'eleven_ttv_v3'})});
+      const j=await r.json();if(!r.ok)throw new Error(j.detail||j.error||r.status);D.previews=j.previews||[];toast(D.previews.length+' voix proposées : écoute-les.');}
+    catch(e){toast('Création impossible : '+String(e.message||e).slice(0,120));}
+    D.busy=false;renderBody();};
+  const choose=async p=>{D.busy=true;renderBody();
+    try{const r=await fetch('/api/voicedesign',{method:'POST',headers:apiHeaders(),body:JSON.stringify({op:'create',name:D.who+' (sur mesure)',description:ta.value,id:p.id})});
+      const j=await r.json();if(!r.ok||!j.voice_id)throw new Error(j.detail||j.error||r.status);
+      VOICE.list.push({id:j.voice_id,name:D.who+' (sur mesure)'});P.voices[D.who]=j.voice_id;scheduleSave();D.previews=[];
+      toast('Voix de '+D.who+' enregistrée. Regénère ses répliques (« Tout l\'épisode »).');}
+    catch(e){toast('Enregistrement impossible : '+String(e.message||e).slice(0,120));}
+    D.busy=false;renderBody();};
+  return el('div',{class:'card'},el('h3',{text:'Créer une voix sur mesure'}),
+    el('p',{class:'hint',text:'Décris la voix, ElevenLabs en propose plusieurs. Écoute, puis choisis celle qui colle au personnage.'}),
+    el('label',{class:'fld'},el('span',{text:'Personnage'}),who),
+    el('label',{class:'fld'},el('span',{text:'Description de la voix'}),ta),
+    el('button',{class:'btn primary',type:'button',disabled:D.busy,onclick:propose},D.busy?'Patiente…':'Proposer des voix'),
+    D.previews.length?el('div',{class:'row'},D.previews.map((p,i)=>el('div',{class:'row',style:'gap:6px'},
+      el('button',{class:'btn sm',type:'button',onclick:()=>play(p.audio)},'▶ Voix '+(i+1)),
+      el('button',{class:'btn sm primary',type:'button',disabled:D.busy,onclick:()=>choose(p)},'Choisir')))):null);
+}
 function voiceCard(s){
   if(!VOICE.ok)return el('p',{class:'hint',text:'Génération des voix : disponible quand l\'outil est hébergé sur Vercel avec ta clé ElevenLabs. En attendant, charge des fichiers audio.'});
   if(VOICE.locked){
@@ -1157,16 +1217,19 @@ function voiceCard(s){
   }
   P.voices=P.voices||{};
   const opts=[['','— choisir —'],...VOICE.list.map(v=>[v.id,v.name])];
-  return el('div',{class:'card'},
+  return [el('div',{class:'card'},
     el('h3',{text:'Voix des personnages'}),
     el('div',{class:'grid2'},SPEAKERS.map(n=>el('label',{class:'fld'},el('span',{text:n}),selectEl(opts,P.voices[n]||'',v=>{P.voices[n]=v;scheduleSave();})))),
+    el('label',{class:'fld'},el('span',{text:'Moteur de voix'}),selectEl((VOICE.models&&VOICE.models.length?VOICE.models:[{id:'eleven_multilingual_v2',name:'Multilingual v2'}]).map(m=>[m.id,m.name+(m.id===bestModel()?' (conseillé)':'')]),curModel(),v=>{CFG.voiceModel=v;scheduleSave();})),
+    el('p',{class:'hint',text:curModel()==='eleven_v3'?'Ce moteur joue les émotions : l\'expression choisie sur une réplique (triste, surpris, rit…) change le ton de la voix.':'Astuce : le moteur v3 joue mieux les émotions des répliques.'}),
     el('div',{class:'row'},
       el('button',{class:'btn primary',type:'button',disabled:VOICE.busy,onclick:()=>genLines(s.lines,s)},VOICE.busy?'Génération…':'Générer les voix de cette scène'),
-      el('button',{class:'btn',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const sc of P.scenes)await genLines(sc.lines,sc);}},'Tout l\'épisode')));
+      el('button',{class:'btn',type:'button',disabled:VOICE.busy,onclick:async()=>{for(const sc of P.scenes)await genLines(sc.lines,sc);}},'Tout l\'épisode'))),
+    designCard()];
 }
 function tabVoices(b){
   const s=curScene();
-  b.append(voiceCard(s));
+  b.append(...[].concat(voiceCard(s)));
   b.append(el('p',{class:'hint',text:'Une réplique = une ligne de texte affichée en sous-titre, et un fichier audio facultatif (par exemple généré avec ElevenLabs).'}));
   s.lines.forEach((l,i)=>b.append(lineCard(s,l,i)));
   b.append(el('div',{class:'row'},
