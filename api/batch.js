@@ -18,6 +18,11 @@ module.exports = async (req, res) => {
       const j = await r.json();
       return res.status(200).json({ voices: (j.voices || []).map(v => ({ id: v.voice_id, name: v.name, category: v.category, labels: v.labels, description: v.description })) });
     }
+    if (op === 'models') {
+      const r = await fetch(API + '/models', { headers: { 'xi-api-key': key } });
+      const j = await r.json().catch(() => []);
+      return res.status(200).json((Array.isArray(j) ? j : []).filter(m => m.can_do_text_to_speech).map(m => ({ id: m.model_id, name: m.name, fr: (m.languages || []).some(l => l.language_id === 'fr'), cost: m.token_cost_factor, maxChars: m.maximum_text_length_per_request })));
+    }
     if (op === 'credits') {
       const r = await fetch(API + '/user/subscription', { headers: { 'xi-api-key': key } });
       const j = await r.json().catch(() => ({}));
