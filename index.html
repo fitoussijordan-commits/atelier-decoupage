@@ -1925,8 +1925,8 @@ async function exportWC(sceneOnly,sup){
   UI.diag=`son ${pk>.01?'OK':'VIDE'} (pic ${pk.toFixed(2)}, ${nVoix} voix chargées, ${Object.keys(LIB).length} sons communs, codec ${sup.ac})`;
   const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:sup.vm||'avc',width:W,height:H,frameRate:FPS},audio:{codec:sup.am,numberOfChannels:2,sampleRate:SR},fastStart:'in-memory',firstTimestampBehavior:'offset'});
   let err=null;
-  const venc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{err=e;}});
-  venc.configure({codec:sup.vc,width:W,height:H,bitrate:2.5e6,framerate:FPS,latencyMode:'quality'});
+  let vDesc=false;const venc=new VideoEncoder({output:(c,m)=>{if(m&&m.decoderConfig&&m.decoderConfig.description)vDesc=true;muxer.addVideoChunk(c,m);},error:e=>{err=e;}});
+  venc.configure({codec:sup.vc,width:W,height:H,bitrate:2.5e6,framerate:FPS,latencyMode:'quality',avc:{format:'avc'}});
   let aChunks=0,aDesc=false;
   /* si Safari ne fournit pas l'en-tête AAC, on le fabrique (AAC-LC, 48 kHz, stéréo) sinon le son est illisible */
   const AAC_ASC=new Uint8Array([0x11,0x90]);
@@ -1956,7 +1956,7 @@ async function exportWC(sceneOnly,sup){
   bar(1);UI.rec=null;
   const blob=new Blob([muxer.target.buffer],{type:'video/mp4'});
   UI.last={blob,name:(sceneOnly?'scene-'+(UI.scene+1):(P.tpl||'episode'))+'.mp4'};
-  UI.t=from;draw();renderBody();toast('Vidéo prête ('+fmt(to-from)+') · '+UI.diag+', '+aChunks+' blocs audio'+(aDesc?'':' sans en-tête')+'.');
+  UI.t=from;draw();renderBody();toast('Vidéo prête ('+fmt(to-from)+') · '+UI.diag+', '+aChunks+' blocs audio'+(aDesc?'':' sans en-tête')+(vDesc?'':', vidéo sans en-tête')+'.');
   return true;
 }
 async function exportVideo(sceneOnly){
