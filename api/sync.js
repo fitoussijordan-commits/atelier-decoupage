@@ -5,7 +5,7 @@
 //   POST {op:'put', ep}               -> { ok, updated }
 //   POST {op:'del', id, updated}      -> { ok }
 //   POST {op:'settings', settings}    -> { ok }
-const { list, put } = require('@vercel/blob');
+const { list, put, del } = require('@vercel/blob');
 const okId = id => /^[A-Za-z0-9_-]{1,60}$/.test(String(id || ''));
 async function readJson(path) {
   const { blobs } = await list({ prefix: path });
@@ -15,7 +15,26 @@ async function readJson(path) {
   return r.ok ? r.json() : null;
 }
 const writeJson = (path, obj) => put(path, JSON.stringify(obj), { access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 0 });
-async function readIndex() { return (await readJson('sync/index.json')) || { episodes: {}, settings: null }; }
+/* index sans fichier partagé (évite les écrasements) : un marqueur vide par épisode, sync/m/<id>/<date>.<supprimé> */
+async function readIndex() {
+  const episodes = {};let cursor;
+  do {
+    const r = await list({ prefix: 'sync/m/', limit: 1000, cursor });
+    for (const b of r.blobs) {
+      const m = b.pathname.match(/^sync\/m\/([A-Za-z0-9_-]+)\/(\d+)\.([01])$/);if (!m) continue;
+      const u = Number(m[2]);if (!episodes[m[1]] || episodes[m[1]].updated < u) episodes[m[1]] = { updated: u, deleted: m[3] === '1' };
+    }
+    cursor = r.hasMore ? r.cursor : null;
+  } while (cursor);
+  const settings = await readJson('sync/settings.json');
+  return { episodes, settings };
+}
+async function mark(id, updated, deleted) {
+  await put(`sync/m/${id}/${updated}.${deleted ? 1 : 0}`, '1', { access: 'public', contentType: 'text/plain', addRandomSuffix: false, allowOverwrite: true });
+  const r = await list({ prefix: `sync/m/${id}/` });
+  const old = r.blobs.filter(b => b.pathname !== `sync/m/${id}/${updated}.${deleted ? 1 : 0}` && Number((b.pathname.split('/').pop() || '').split('.')[0]) < updated).map(b => b.url);
+  if (old.length) await del(old).catch(() => {});
+}
 
 module.exports = async (req, res) => {
   const pw = process.env.APP_PASSWORD;
@@ -53,24 +72,17 @@ module.exports = async (req, res) => {
       const ep = b.ep || {};
       if (!okId(ep.id) || !Array.isArray(ep.scenes)) return res.status(400).json({ error: 'épisode' });
       const updated = Number(ep.updated) || Date.now();
-      const r = await writeJson(`sync/ep/${ep.id}.json`, ep);
-      const idx = await readIndex();
-      const cur = idx.episodes[ep.id];
-      if (!cur || (cur.updated || 0) <= updated) idx.episodes[ep.id] = { name: String(ep.name || '').slice(0, 120), updated, url: r.url };
-      await writeJson('sync/index.json', idx);
+      await writeJson(`sync/ep/${ep.id}.json`, ep);
+      await mark(ep.id, updated, false);
       return res.status(200).json({ ok: true, updated });
     }
     if (b.op === 'del') {
       if (!okId(b.id)) return res.status(400).json({ error: 'id' });
-      const idx = await readIndex();
-      idx.episodes[b.id] = { name: '', updated: Number(b.updated) || Date.now(), deleted: true };
-      await writeJson('sync/index.json', idx);
+      await mark(b.id, Number(b.updated) || Date.now(), true);
       return res.status(200).json({ ok: true });
     }
     if (b.op === 'settings') {
-      const idx = await readIndex();
-      idx.settings = Object.assign({}, b.settings || {}, { updated: Date.now() });
-      await writeJson('sync/index.json', idx);
+      await writeJson('sync/settings.json', Object.assign({}, b.settings || {}, { updated: Date.now() }));
       return res.status(200).json({ ok: true });
     }
     return res.status(400).json({ error: 'op' });
