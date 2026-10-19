@@ -961,13 +961,89 @@ const IDB={
   async get(k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});},
   async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
 };
-const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v,local:a.local}:null;
+/* ---- Synchronisation entre appareils (serveur) ---- */
+let SYNCMETA={},SYNC={busy:false,ok:null,last:0,timer:0};
+const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);};
+async function audioHash(a){
+  if(a.h)return a.h;if(!a.ab)return null;
+  try{const d=await crypto.subtle.digest('SHA-256',a.ab);a.h=[...new Uint8Array(d)].slice(0,16).map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){return null;}
+  return a.h;
+}
+const audioRef=a=>a?{name:a.name,dur:a.dur,v:a.v,local:a.local,h:a.h,url:a.url}:null;
+const epPayload=e=>({id:e.id,name:e.name,tpl:e.tpl,yt:e.yt,scenes:e.scenes.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:audioRef(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:audioRef(x.audio)}))}))});
+const epSig=e=>fnv(JSON.stringify(epPayload(e),(k,v)=>k==='url'||k==='updated'?undefined:v));
+const b64=ab=>{const u=new Uint8Array(ab);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s);};
+async function syncFetch(opts){const r=await fetch('/api/sync'+(opts.q||''),opts.body?{method:'POST',headers:apiHeaders(),body:JSON.stringify(opts.body)}:{headers:apiHeaders()});if(!r.ok)throw new Error('sync '+r.status);return r.json();}
+function stableIds(){
+  EPS=allEps();
+  for(const e of EPS){const sid=e.tpl?'tpl-'+e.tpl:null;
+    if(sid&&e.id!==sid&&!EPS.some(x=>x.id===sid)){if(P.eid===e.id)P.eid=sid;e.id=sid;}}
+}
+async function loadRemoteAudio(a){
+  if(!a||!a.url)return null;
+  let r=null;try{r=await fetch(a.url);}catch(e){}
+  if(!r||!r.ok){try{r=await fetch('/api/sync?op=file&u='+encodeURIComponent(a.url),{headers:apiHeaders()});}catch(e){}}
+  if(!r||!r.ok)return null;
+  const ab=await r.arrayBuffer();ensureAudio();const buf=await AC.decodeAudioData(ab.slice(0));
+  return{name:a.name,ab,buf,dur:buf.duration,v:a.v,local:a.local,h:a.h,url:a.url};
+}
+async function syncPull(){
+  const idx=await syncFetch({q:'?op=index'});let got=0,del=0;
+  EPS=allEps();
+  for(const id in idx.episodes||{}){
+    const r=idx.episodes[id],m=SYNCMETA[id]||{},local=EPS.find(e=>e.id===id);
+    if(r.deleted){if(local&&(m.updated||0)<=r.updated&&EPS.length>1){EPS=EPS.filter(e=>e.id!==id);delete SYNCMETA[id];del++;}continue;}
+    if(local&&(m.updated||0)>=r.updated)continue;
+    const ep=await syncFetch({q:'?op=get&id='+encodeURIComponent(id)});
+    for(const s of ep.scenes)for(const o of [...s.lines,...(s.sfx||[])])if(o.audio)o.audio=await loadRemoteAudio(o.audio);
+    const e={id,name:ep.name,tpl:ep.tpl,yt:ep.yt,scenes:ep.scenes};
+    if(local)Object.assign(local,e);else EPS.push(e);
+    SYNCMETA[id]={updated:r.updated,sh:epSig(e)};got++;
+  }
+  if(idx.settings&&(idx.settings.updated||0)>(SYNCMETA._settings||0)){
+    Object.assign(P.voices=P.voices||{},idx.settings.voices||{});
+    for(const k of ['cards','autoSfx','music','relief','toon','voiceModel'])if(idx.settings.cfg&&idx.settings.cfg[k]!==undefined)CFG[k]=idx.settings.cfg[k];
+    SYNCMETA._settings=idx.settings.updated;
+  }
+  if(got||del){
+    const cur=EPS.find(e=>e.id===P.eid)||EPS[0];
+    P.eid=cur.id;P.name=cur.name;P.tpl=cur.tpl;P.yt=cur.yt;P.scenes=cur.scenes;
+    UI.scene=Math.min(UI.scene,P.scenes.length-1);
+    await IDB.set('project2',serialize()).catch(()=>{});renderPanels();draw();
+    toast(`${got?got+' épisode'+(got>1?'s':'')+' mis à jour depuis tes autres appareils':''}${got&&del?', ':''}${del?del+' supprimé'+(del>1?'s':''):''}.`);
+  }
+}
+async function syncPush(){
+  let n=0;
+  for(const e of allEps()){
+    const objs=[];for(const s of e.scenes)for(const o of [...s.lines,...(s.sfx||[])])if(o.audio&&o.audio.ab)objs.push(o.audio);
+    for(const a of objs)await audioHash(a);
+    const sig=epSig(e),m=SYNCMETA[e.id]||{};
+    if(m.sh===sig)continue;
+    for(const a of objs)if(a.h&&!a.url){const r=await syncFetch({body:{op:'audio',h:a.h,data:b64(a.ab)}});a.url=r.url;}
+    const updated=Date.now(),p=epPayload(e);p.updated=updated;
+    await syncFetch({body:{op:'put',ep:p}});
+    SYNCMETA[e.id]={updated,sh:sig};n++;
+  }
+  const ss=fnv(JSON.stringify({v:P.voices||{},c:[CFG.cards,CFG.autoSfx,CFG.music,CFG.relief,CFG.toon,CFG.voiceModel]}));
+  if(SYNCMETA._ss!==ss){await syncFetch({body:{op:'settings',settings:{voices:P.voices||{},cfg:{cards:CFG.cards,autoSfx:CFG.autoSfx,music:CFG.music,relief:CFG.relief,toon:CFG.toon,voiceModel:CFG.voiceModel}}}});SYNCMETA._ss=ss;SYNCMETA._settings=Date.now();}
+  if(n)IDB.set('project2',serialize()).catch(()=>{});
+  return n;
+}
+async function syncNow(pull){
+  if(SYNC.busy||UI.rec)return;SYNC.busy=true;
+  try{if(pull)await syncPull();await syncPush();SYNC.ok=true;SYNC.last=Date.now();}
+  catch(e){SYNC.ok=false;}
+  SYNC.busy=false;if(UI.tab==='export')renderBody();
+}
+const scheduleSync=()=>{clearTimeout(SYNC.timer);SYNC.timer=setTimeout(()=>syncNow(false),6000);};
+const serAudio=a=>a?{name:a.name,ab:a.ab,dur:a.dur,v:a.v,local:a.local,h:a.h,url:a.url}:null;
 const serScenes=sc=>sc.map(s=>({...s,lines:s.lines.map(l=>({...l,audio:serAudio(l.audio)})),sfx:(s.sfx||[]).map(x=>({...x,audio:serAudio(x.audio)}))}));
 function serialize(){
-  return{v:2,ex:1,cfg:CFG,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,yt:e.yt,scenes:serScenes(e.scenes)}))};
+  return{v:2,ex:1,sync:SYNCMETA,cfg:CFG,sfxrev:SFXREV,seeded:SEEDED,cur:P.eid,custom:P.custom,voices:P.voices||{},episodes:allEps().map(e=>({id:e.id,name:e.name,tpl:e.tpl,yt:e.yt,scenes:serScenes(e.scenes)}))};
 }
 let saveTimer=0;
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await IDB.set('project2',serialize());}catch(e){}},700);if(SYNC.ready)scheduleSync();}
 function decodeAll(eps){
   for(const e of eps)for(const s of e.scenes)for(const l of [...s.lines,...(s.sfx||[])])if(l.audio&&l.audio.ab){
     const a=l.audio;ensureAudio();
@@ -979,7 +1055,7 @@ async function restore(){
     const s2=await IDB.get('project2');
     if(s2&&s2.v===2&&s2.episodes&&s2.episodes.length){
       for(const id in s2.custom||{}){const c=s2.custom[id];addSprite(id,c.src,c.w,c.h,{custom:true,k:c.k||1,base:c.base});}
-      SEEDED=s2.seeded||[];SFXREV=s2.sfxrev||{};Object.assign(CFG,s2.cfg||{});
+      SEEDED=s2.seeded||[];SFXREV=s2.sfxrev||{};SYNCMETA=s2.sync||{};Object.assign(CFG,s2.cfg||{});
       EPS=s2.episodes.map(e=>({id:e.id,name:e.name,scenes:e.scenes,tpl:e.tpl,yt:e.yt}));
       const cur=EPS.find(e=>e.id===s2.cur)||EPS[0];
       P={v:1,eid:cur.id,name:cur.name,tpl:cur.tpl,yt:cur.yt,scenes:cur.scenes,custom:s2.custom||{},voices:s2.voices||{}};
@@ -1041,7 +1117,8 @@ function newEpisode(copyFrom){
 }
 function delEpisode(){
   if(EPS.length<2)return;
-  const rest=allEps().filter(e=>e.id!==P.eid);EPS=rest;
+  const id=P.eid,rest=allEps().filter(e=>e.id!==id);EPS=rest;delete SYNCMETA[id];
+  syncFetch({body:{op:'del',id,updated:Date.now()}}).catch(()=>{});
   loadEpisode(rest[0].id);
 }
 function renderEpbar(){
@@ -1923,6 +2000,8 @@ function tabExport(b){
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
     el('div',{class:'card'},
       el('h3',{text:'Épisodes'}),
+      el('div',{class:'row'},el('span',{class:'hint',text:SYNC.busy?'Synchronisation en cours…':SYNC.ok===false?'Synchronisation impossible pour l\'instant (réessaie plus tard).':SYNC.ok?'Synchronisé avec tes autres appareils ✓':'Synchronisation au démarrage…'}),
+        el('button',{class:'btn sm',type:'button',disabled:SYNC.busy,onclick:()=>syncNow(true)},'Synchroniser maintenant')),
       el('label',{class:'fld'},el('span',{text:'Nom de l\'épisode'}),(()=>{const i=el('input',{type:'text',value:P.name||''});i.addEventListener('input',()=>{P.name=i.value;scheduleSave();renderEpbar();});return i;})()),
       el('div',{class:'row'},
         el('button',{class:'btn sm',type:'button',onclick:()=>newEpisode(false)},'Nouvel épisode vide'),
@@ -2126,7 +2205,9 @@ $('#scrub').addEventListener('input',e=>{if(UI.playing)pause();seek(+e.target.va
 setPlayIcon();
 const fontsReady=document.fonts&&document.fonts.load?Promise.all([document.fonts.load('600 36px "Baloo 2"'),document.fonts.load('400 16px Nunito')]).catch(()=>{}):Promise.resolve();
 (async()=>{
-  await restore();seedEpisodes();refreshTpl();scheduleSave();initVoices();loadLib().then(()=>draw());
+  await restore();seedEpisodes();refreshTpl();stableIds();scheduleSave();initVoices();loadLib().then(()=>draw());
+  syncNow(true).then(()=>{SYNC.ready=true;});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&SYNC.ready)syncNow(true);});
   UI.scene=0;UI.t=startsOf()[0]+restLocal(P.scenes[0]);
   setTab(UI.tab);draw();
   fontsReady.then(()=>draw());
