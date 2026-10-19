@@ -38,12 +38,19 @@ async function mark(id, updated, deleted) {
 
 module.exports = async (req, res) => {
   const pw = process.env.APP_PASSWORD;
-  if (pw && req.headers['x-app-password'] !== pw) return res.status(401).json({ error: 'mot de passe' });
+  const tok = process.env.GEN_TOKEN && req.query && req.query.token === process.env.GEN_TOKEN;
+  if (pw && !tok && req.headers['x-app-password'] !== pw) return res.status(401).json({ error: 'mot de passe' });
   res.setHeader('Cache-Control', 'no-store');
   try {
     if (req.method === 'GET') {
       const op = req.query.op;
       if (op === 'index') return res.status(200).json(await readIndex());
+      if (op === 'selftest' && tok) {
+        const t1 = Date.now();await writeJson('sync/ep/zz-test.json', { id: 'zz-test', name: 'test', scenes: [] });await mark('zz-test', t1, false);
+        await mark('zz-test', t1 + 5, false);const a = await readIndex();const g = await readJson('sync/ep/zz-test.json');
+        await mark('zz-test', t1 + 10, true);const b2 = await readIndex();
+        return res.status(200).json({ afterPut: a.episodes['zz-test'], got: !!g, afterDel: b2.episodes['zz-test'] });
+      }
       if (op === 'get') {
         if (!okId(req.query.id)) return res.status(400).json({ error: 'id' });
         const ep = await readJson(`sync/ep/${req.query.id}.json`);
