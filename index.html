@@ -976,7 +976,7 @@ const b64=ab=>{const u=new Uint8Array(ab);let s='';for(let i=0;i<u.length;i+=327
 /* délai max : sur mobile une requête coupée (veille, réseau) peut ne jamais répondre */
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('délai dépassé')),ms))]);
 async function timedFetch(url,init,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{...(init||{}),signal:c.signal});}finally{clearTimeout(t);}}
-async function syncFetch(opts){const r=await timedFetch('/api/sync'+(opts.q||''),opts.body?{method:'POST',headers:apiHeaders(),body:JSON.stringify(opts.body)}:{headers:apiHeaders()},45000);if(!r.ok)throw new Error('sync '+r.status);return r.json();}
+async function syncFetch(opts){const r=await timedFetch('/api/sync'+(opts.q||''),opts.body?{method:'POST',headers:apiHeaders(),body:JSON.stringify(opts.body)}:{headers:apiHeaders()},45000);if(!r.ok){let d='';try{const j=await r.json();d=[j.error,j.detail].filter(Boolean).join(' — ');}catch(e){}throw new Error('serveur '+r.status+(d?' : '+d:''));}return r.json();}
 const syncStep=t=>{SYNC.step=t;SYNC.beat=Date.now();if(UI.tab==='export')renderBody();};
 function stableIds(){
   EPS=allEps();
@@ -1047,7 +1047,7 @@ async function syncNow(pull){
   if(SYNC.busy&&Date.now()-(SYNC.beat||0)>120000)SYNC.busy=false; // synchro restée bloquée : on relance
   if(SYNC.busy||UI.rec)return;SYNC.busy=true;SYNC.partial=false;SYNC.beat=Date.now();const run=SYNC.run=(SYNC.run||0)+1;
   try{if(pull)await syncPull();await syncPush();SYNC.ok=true;SYNC.last=Date.now();}
-  catch(e){SYNC.ok=false;}
+  catch(e){SYNC.ok=false;SYNC.err=(SYNC.step?SYNC.step+' : ':'')+(e&&e.name==='AbortError'?'délai dépassé':String(e&&e.message||e));}
   if(run!==SYNC.run)return;
   SYNC.busy=false;SYNC.step='';if(UI.tab==='export')renderBody();
 }
@@ -2015,7 +2015,7 @@ function tabExport(b){
     ...(supported?[]:[el('p',{class:'hint',text:'Ce navigateur ne sait pas enregistrer la scène en vidéo.'})]),
     el('div',{class:'card'},
       el('h3',{text:'Épisodes'}),
-      el('div',{class:'row'},el('span',{class:'hint',text:SYNC.busy?'Synchronisation en cours…'+(SYNC.step?' ('+SYNC.step+')':''):SYNC.ok===false?'Synchronisation impossible pour l\'instant (réessaie plus tard).':SYNC.ok&&SYNC.partial?'Synchronisé en partie (certains sons trop lourds ou réseau instable) — réessaie avec « Synchroniser maintenant ».':SYNC.ok?'Synchronisé avec tes autres appareils ✓':'Synchronisation au démarrage…'}),
+      el('div',{class:'row'},el('span',{class:'hint',text:SYNC.busy?'Synchronisation en cours…'+(SYNC.step?' ('+SYNC.step+')':''):SYNC.ok===false?'Synchronisation impossible ('+(SYNC.err||'erreur inconnue')+').':SYNC.ok&&SYNC.partial?'Synchronisé en partie (certains sons trop lourds ou réseau instable) — réessaie avec « Synchroniser maintenant ».':SYNC.ok?'Synchronisé avec tes autres appareils ✓':'Synchronisation au démarrage…'}),
         el('button',{class:'btn sm',type:'button',onclick:()=>{if(SYNC.busy)SYNC.beat=0;syncNow(true);}},'Synchroniser maintenant')),
       el('label',{class:'fld'},el('span',{text:'Nom de l\'épisode'}),(()=>{const i=el('input',{type:'text',value:P.name||''});i.addEventListener('input',()=>{P.name=i.value;scheduleSave();renderEpbar();});return i;})()),
       el('div',{class:'row'},
