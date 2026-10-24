@@ -209,6 +209,12 @@ for(const id in SPRITE_DATA){const d=SPRITE_DATA[id];addSprite(id,d[0],d[1],d[2]
 const svgURI=s=>'data:image/svg+xml;utf8,'+encodeURIComponent(s);
 const OL='stroke="#23262f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"';
 const PROPS={
+ 'ballon':{w:120,h:120,base:72,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><g ${OL}><circle cx="60" cy="60" r="54" fill="#e63946"/></g><path d="M18 46C40 30 80 30 102 46" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M14 72C40 90 80 90 106 72" stroke="#ffd23a" stroke-width="10" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="30" rx="12" ry="7" fill="#fff" opacity=".7" transform="rotate(-25 40 30)"/><circle cx="60" cy="60" r="54" fill="none" ${OL}/></svg>`},
+ 'gateau':{w:200,h:190,base:120,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 190"><g ${OL}><ellipse cx="100" cy="170" rx="92" ry="14" fill="#fff"/><rect x="28" y="92" width="144" height="74" rx="10" fill="#c98a4b"/><path d="M28 104Q46 124 64 104T100 104T136 104T172 104V92H28Z" fill="#ffd1e1"/><rect x="58" y="40" width="10" height="52" fill="#8fd0ff"/><rect x="95" y="34" width="10" height="58" fill="#ffd23a"/><rect x="132" y="40" width="10" height="52" fill="#ff8fb0"/></g><g fill="#ffb547"><ellipse cx="63" cy="30" rx="6" ry="10"/><ellipse cx="100" cy="24" rx="6" ry="10"/><ellipse cx="137" cy="30" rx="6" ry="10"/></g><circle cx="70" cy="140" r="6" fill="#e63946"/><circle cx="110" cy="132" r="6" fill="#e63946"/><circle cx="145" cy="146" r="6" fill="#e63946"/></svg>`},
+ 'cadeau':{w:180,h:180,base:105,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><g ${OL}><rect x="18" y="70" width="144" height="104" rx="6" fill="#4aa3ff"/><rect x="10" y="50" width="160" height="30" rx="6" fill="#6fb8ff"/><rect x="78" y="50" width="24" height="124" fill="#ffd23a"/><path d="M90 50C60 10 30 30 52 50ZM90 50C120 10 150 30 128 50Z" fill="#ffd23a"/></g></svg>`},
+ 'livre':{w:180,h:120,base:70,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120"><g ${OL}><path d="M90 24C60 8 30 8 8 16V108C30 100 60 100 90 114Z" fill="#fff"/><path d="M90 24C120 8 150 8 172 16V108C150 100 120 100 90 114Z" fill="#fff"/><path d="M90 24V114" fill="none"/></g><path d="M22 36H74M22 52H74M22 68H66M106 36H158M106 52H158M106 68H150" stroke="#9aa3b5" stroke-width="5" stroke-linecap="round"/></svg>`},
+ 'fleur':{w:120,h:200,base:120,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 200"><g ${OL}><path d="M60 80V196" fill="none" stroke="#2c6a35"/><path d="M60 150C30 140 26 120 30 112C46 116 58 130 60 150Z" fill="#4aae58"/><g fill="#ff8fb0"><circle cx="60" cy="28" r="20"/><circle cx="88" cy="50" r="20"/><circle cx="78" cy="82" r="20"/><circle cx="42" cy="82" r="20"/><circle cx="32" cy="50" r="20"/></g><circle cx="60" cy="56" r="16" fill="#ffd23a"/></g></svg>`},
+ 'panier':{w:200,h:170,base:100,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170"><g ${OL}><path d="M40 80C40 10 160 10 160 80" fill="none" stroke="#8a5a2b" stroke-width="10"/><circle cx="70" cy="76" r="22" fill="#e63946"/><circle cx="104" cy="70" r="22" fill="#7bc043"/><circle cx="134" cy="78" r="22" fill="#e63946"/><path d="M14 84H186L166 164H34Z" fill="#c98a4b"/></g><path d="M30 110H170M36 136H164M70 84L76 164M100 84V164M130 84L124 164" stroke="#8a5a2b" stroke-width="5"/></svg>`},
  'cerf-volant':{w:200,h:300,base:190,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><g ${OL}><polygon points="100,8 172,110 100,222 28,110" fill="#e63946"/><polygon points="100,8 172,110 100,110" fill="#ff6f78" stroke="none"/><polygon points="28,110 100,110 100,222" fill="#ff6f78" stroke="none"/><polygon points="100,8 172,110 100,222 28,110" fill="none"/><path d="M100 8V222M28 110H172" fill="none"/><path d="M100 222C78 244 124 256 100 276C86 290 112 294 102 298" fill="none" stroke-width="4"/><circle cx="92" cy="246" r="9" fill="#ffd84a"/><circle cx="106" cy="272" r="9" fill="#4aa3ff"/></g></svg>`},
  'cerf-volant-dechire':{w:200,h:300,base:190,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><g ${OL}><path fill-rule="evenodd" fill="#e63946" d="M100,8 172,110 100,222 28,110Z M92,66 120,88 104,112 132,132 108,154 82,130 98,108 78,92Z"/><path d="M100 8V60M28 110H70M130 110H172M100 160V222" fill="none"/><polygon points="62,150 20,206 72,194" fill="#ff6f78"/><path d="M100 222C78 244 124 256 100 276C86 290 112 294 102 298" fill="none" stroke-width="4"/><circle cx="92" cy="246" r="9" fill="#ffd84a"/></g></svg>`},
  'buisson':{w:300,h:190,base:150,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 190"><g stroke="#24602c" stroke-width="5"><ellipse cx="80" cy="125" rx="74" ry="58" fill="#3f9e4d"/><ellipse cx="172" cy="98" rx="92" ry="82" fill="#4aae58"/><ellipse cx="242" cy="128" rx="55" ry="52" fill="#3f9e4d"/></g><g fill="#ff7aa2"><circle cx="70" cy="110" r="7"/><circle cx="190" cy="80" r="7"/><circle cx="238" cy="120" r="7"/></g></svg>`},
@@ -311,7 +317,8 @@ const ACT={
   bounce:{label:'Rebondir',params:[]},shake:{label:'Trembler',params:[]},wobble:{label:'Balancer',params:[]},
   swap:{label:'Changer de pose',params:['spr']},fadein:{label:'Apparaître',params:[]},fadeout:{label:'Disparaître',params:[]},
   zoom:{label:'Zoom',params:['s']},
-  expr:{label:'Expression',params:['expr']}
+  expr:{label:'Expression',params:['expr']},
+  hold:{label:'Tenu par un perso',params:[]},throw:{label:'Lancé',params:[]},drop:{label:'Posé',params:[]}
 };
 const lineDur=l=>l.audio&&l.audio.dur?l.audio.dur:Math.max(1.2,(l.text||'').length*.062+.6);
 function autoTimes(s){let t=s.lead||.7;for(const l of s.lines){l.t=+t.toFixed(2);t+=lineDur(l)+.35;}
@@ -572,6 +579,32 @@ function stateAt(a,t){
   {const sd=a.id.charCodeAt(0)||0;st.sy*=1+.018*Math.sin(t*2.3+sd);if(groupOf(st.spr)!=='objets')st.rot+=.012*Math.sin(t*1.1+sd*.7);}
   return st;
 }
+/* objets tenus / lancés : le ballon suit la main du perso, vole en arc, rebondit au sol */
+const HOLDT=['hold','throw','drop'];
+const isHeldProp=a=>a.acts&&a.acts.some(c=>HOLDT.includes(c.type));
+function handOf(st){const b=actorBox(st);if(!b)return{x:st.x,y:st.y-120};return{x:st.x+st.ox+(st.flip?-1:1)*b.w*.3,y:st.y+st.oy-b.h*.3};}
+function propPlace(a,st,lt,M){
+  const acts=a.acts.filter(c=>HOLDT.includes(c.type)).sort((p,q)=>p.t-q.t);if(!acts.length)return;
+  const byId=id=>{if(!id)return null;for(const [ac,x] of M)if(ac.id===id)return x;return null;};
+  const ph=dispH(st.spr,st.s),anc=h=>({x:h.x,y:h.y+ph*.55});
+  let who=null,gx=st.x,land=-9;
+  if(acts[0].type!=='hold'&&acts[0].who)who=acts[0].who;
+  for(const c of acts){
+    if(lt<c.t)break;
+    const d=Math.max(.2,+c.d||.9);
+    if(c.type==='hold'){who=c.who;continue;}
+    const h=byId(c.who||who),tg=c.type==='throw'?byId(c.to):null;
+    const p0=h?anc(handOf(h)):{x:gx,y:GROUND};
+    const p1=tg?anc(handOf(tg)):{x:c.type==='drop'?p0.x:(c.tx!=null?+c.tx:clamp(p0.x+((h&&h.flip)?-380:380),100,W-100)),y:GROUND};
+    if(lt<c.t+d){const q=(lt-c.t)/d,arc=c.type==='drop'?0:120+Math.abs(p1.x-p0.x)*.22;
+      st.x=lerp(p0.x,p1.x,q);st.y=lerp(p0.y,p1.y,c.type==='drop'?q*q:q)-arc*4*q*(1-q);st.oy=0;st.ox=0;st.rot=q*Math.PI*2*(p1.x<p0.x?-1:1);st.sx=st.sy=1;return;}
+    if(tg)who=c.to;else{who=null;gx=p1.x;land=c.t+d;}
+  }
+  const h=byId(who);
+  if(h){const p=anc(handOf(h));st.x=p.x;st.y=p.y;st.ox=0;st.oy=Math.sin(lt*6)*2;st.rot=0;st.sx=st.sy=1;return;}
+  st.x=gx;st.y=GROUND;st.ox=0;st.rot=0;
+  const t2=lt-land;st.oy=t2>=0&&t2<1.2?-70*Math.abs(Math.sin(t2*Math.PI*2.4))*Math.exp(-t2*3.2):0;
+}
 const stageOrder=s=>s.actors.map((a,i)=>({a,i})).sort((p,q)=>(p.a.y+(p.a.z||0))-(q.a.y+(q.a.z||0))||p.i-q.i).map(o=>o.a);
 function actorBox(st){
   const sp=SPR[st.spr];if(!sp)return null;
@@ -743,8 +776,10 @@ function renderAt(t){
   drawFx(s,t);
   const ln=s.lines.find(l=>lt>=l.t&&lt<l.t+lineDur(l)+.15);
   const talker=ln?speakerOf(s,ln.who):null,amp=talker?ampAt(ln,lt-ln.t):0;
-  for(const a of stageOrder(s)){
-    const st=stateAt(a,lt);
+  const ord=stageOrder(s),M=new Map(ord.map(a=>[a,stateAt(a,lt)]));
+  for(const a of ord)if(isHeldProp(a))propPlace(a,M.get(a),lt,M);
+  for(const a of [...ord.filter(a=>!isHeldProp(a)),...ord.filter(isHeldProp)]){
+    const st=M.get(a);
     /* geste du corps (bras levés, mains sur les joues…) pendant 2,4 s quand l'émotion change */
     if(CFG.toon&&/\/debout$/.test(st.spr)&&st.expr){const e=lastExpr(a,lt),gp=GEST[st.expr];
       if(e&&e.t>.2&&lt-e.t<2.4&&e.expr===st.expr&&gp){const g=groupOf(st.spr),id=[].concat(gp).map(n=>g+'/geste-'+n).find(i=>SPR[i]&&SPR[i].ready);if(id){st.spr=id;st.expr='';st.gesture=true;}}}
@@ -864,6 +899,8 @@ function scheduleAudio(from,dest,ctx){
         else if(c.type==='run'&&!prop){one(LIB.whoosh,t0,.3);loop(LIB.course,t0,t0+d,.32,comp,.15);}
         else if(c.type==='jump')one(LIB.saut,t0,.45);
         else if(c.type==='bounce'&&!prop)one(LIB.rebond,t0,.2);
+        else if(c.type==='throw'){one(LIB.whoosh,t0,.3);one(c.to?LIB.pop:LIB.rebond,t0+d,c.to?.3:.4);}
+        else if(c.type==='drop')one(LIB.rebond,t0+d,.35);
         else if(c.type==='fadein')one(LIB.pop,t0,.4);
         else if(c.type==='fadeout')one(LIB.whoosh,t0,.25);
         else if(c.type==='shake'&&!prop)one(LIB.tremble,t0,.3);
@@ -1511,6 +1548,8 @@ $('#fileAudioMulti').addEventListener('change',async e=>{
 });
 
 /* ---- Onglet Écrire : un épisode entier à partir d'un texte simple ---- */
+const PROP_KEYS={ballon:'ballon',balle:'ballon',gateau:'gateau',cadeau:'cadeau',paquet:'cadeau',livre:'livre',fleur:'fleur',bouquet:'fleur',panier:'panier','cerf-volant':'cerf-volant','cerf volant':'cerf-volant'};
+const propKey=v=>{for(const n in PROP_KEYS)if(new RegExp('\\b'+n+'s?\\b').test(v))return PROP_KEYS[n];return null;};
 const norm=x=>(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'").replace(/\s+/g,' ').trim();
 const WHO={};for(const g in CH)if(g!=='objets')WHO[norm(CH[g].name)]=g;
 const EXPR_KEYS=(()=>{const m={};for(const k in EXPR_FR){m[norm(k)]=k;m[norm(EXPR_FR[k])]=k;}
@@ -1547,6 +1586,10 @@ function parseScript(txt){
       newScene(m[1],o);return;
     }
     if(!sc)newScene('',{});
+    if((m=line.match(/^\(\s*objets?\s*:\s*(.+?)\s*\)$/i))){
+      const v=norm(m[1]),k=propKey(v);if(!k){out.errors.push(`Ligne ${no+1} : objet « ${m[1]} » inconnu.`);return;}
+      sc.props=sc.props||[];sc.props.push({k,side:/droite/.test(v)?'right':/gauche/.test(v)?'left':''});return;
+    }
     if((m=line.match(/^\(\s*(son|bruit|bruitage|ambiance|musique)\s*:\s*(.+?)\s*\)$/i))){
       const k=norm(m[1]);
       if(k==='musique'){const v=norm(m[2]);sc.music=v==='nuit'?'nuit':(MOOD_KEYS[v]??sc.music);return;}
@@ -1564,8 +1607,13 @@ function parseScript(txt){
     if((m=line.match(/^([A-Za-zÀ-ÿ]+)\s+(.+)$/))){
       const g=WHO[norm(m[1])];
       if(g){
-        const v=norm(m[2]).replace(/[.!…]+$/,''),a={g,ln:sc.lines.length};let m2;
-        if(/^entre/.test(v)){a.type='enter';a.side=/droite/.test(v)?'right':/gauche/.test(v)?'left':'';}
+        const v=norm(m[2]).replace(/[.!…]+$/,''),a={g,ln:sc.lines.length};let m2;const pk=propKey(v);
+        if(pk&&/^(lance|passe|envoie|donne|jette|offre|tend|shoote|tape|frappe|renvoie)/.test(v)){a.type='pthrow';a.prop=pk;
+          const tg=Object.keys(WHO).find(n=>WHO[n]!==g&&new RegExp('\\b'+n+'\\b').test(v));if(tg){a.to=WHO[tg];cast(a.to);}
+          else if(/droite/.test(v))a.dir='right';else if(/gauche/.test(v))a.dir='left';}
+        else if(pk&&/^(pose|lache|laisse tomber|depose|range)/.test(v)){a.type='pdrop';a.prop=pk;}
+        else if(pk&&/^(prend|attrape|ramasse|tient|recupere|rattrape|saisit|porte|a |sort|trouve|serre|cueille)/.test(v)){a.type='phold';a.prop=pk;}
+        else if(/^entre/.test(v)){a.type='enter';a.side=/droite/.test(v)?'right':/gauche/.test(v)?'left':'';}
         else if(/^(sort|part|s'en va|quitte)/.test(v)){a.type='exit';a.side=/droite/.test(v)?'right':/gauche/.test(v)?'left':'';}
         else if(/^saute/.test(v))a.type='jump';
         else if(/^(sautille|rebondi|danse|se rejouit)/.test(v))a.type='bounce';
@@ -1597,10 +1645,25 @@ function buildFromScript(ps){
     p.cast.forEach((g,k)=>pos[g]=slots[k]!=null?slots[k]:200+k*220);
     const L=s.lines.length;
     if(p.acts.some(a=>a.type==='enter'&&a.ln===0))s.lead=1.7;
+    const ids={};for(const g of p.cast)ids[g]=uid();
+    const anchor=(c,a)=>{if(a.ln<L){c.ln=a.ln;c.off=a.off!=null?a.off:-.15;}else if(L){c.ln=L-1;c.after=true;c.off=0;}};
+    const pkeys=[...new Set([...(p.props||[]).map(o=>o.k),...p.acts.filter(a=>a.prop).map(a=>a.prop)])];
+    for(const k of pkeys){
+      const decl=(p.props||[]).find(o=>o.k===k),pa=p.acts.filter(a=>a.prop===k),f=pa[0];
+      let x=W/2+90;
+      if(decl&&decl.side)x=decl.side==='right'?W-240:240;
+      else if(f&&pos[f.g]!=null)x=clamp(pos[f.g]+(pos[f.g]<W/2?150:-150),120,W-120);
+      const acts=[];
+      for(const a of pa){const c={id:uid(),type:a.type.slice(1),who:ids[a.g],t:0,d:a.type==='pthrow'?.9:a.type==='pdrop'?.4:.1};
+        if(a.to)c.to=ids[a.to];else if(a.dir)c.tx=a.dir==='right'?W-180:180;
+        anchor(c,a);if(a.type==='phold')c.off=(c.off||0)+.2;acts.push(c);}
+      s.actors.push({id:uid(),spr:'objets/'+k,x,y:GROUND,s:1,flip:false,z:1000,acts});
+    }
     for(const g of p.cast){
-      const x=pos[g],acts=[],A={id:uid(),spr:g+'/debout',x,y:GROUND,s:1,flip:x>W/2,z:0,acts};
+      const x=pos[g],acts=[],A={id:ids[g],spr:g+'/debout',x,y:GROUND,s:1,flip:x>W/2,z:0,acts};
       const sprOf=pose=>SPR[g+'/'+pose]?g+'/'+pose:g+'/debout';
       for(const a of p.acts.filter(q=>q.g===g)){
+        if(a.prop){if(a.type==='pthrow'){const c={id:uid(),type:'bounce',d:.4,t:0};anchor(c,a);acts.push(c);}continue;}
         const c={id:uid(),type:a.type,d:1,t:0};
         if(a.ln<L){c.ln=a.ln;c.off=a.off!=null?a.off:-.15;}else if(L){c.ln=L-1;c.after=true;c.off=0;}
         if(a.type==='enter'){c.side=a.side||(x<W/2?'left':'right');c.d=1.5;if(a.ln===0){delete c.ln;delete c.off;}}
@@ -1643,6 +1706,7 @@ Décors : parc, maison, prairie, soir, nuit, chambre, chambre noire
 Musiques : joyeuse, calme, triste, suspense, berceuse, fête, aucune
 Expressions : content, très content, rit, surpris, triste, inquiet, effrayé, gêné, réfléchit, en colère, endormi
 Actions : entre (par la gauche / la droite), sort, saute, sautille, tremble, court vers Roux, marche vers la droite, s'assoit, se lève, salue, disparaît, apparaît, est triste…
+Objets : ballon, gâteau, cadeau, livre, fleur, panier, cerf-volant — (objet : ballon) le pose dans la scène ; Roux prend le ballon ; Roux lance le ballon à Caramel ; Caramel pose le ballon
 Ajoute « cercle » dans les parenthèses d'une scène pour finir en cercle.`;
 const SCRIPT_EX=`Titre : Épisode 3 · Pistache perd son doudou
 
@@ -1664,7 +1728,7 @@ const CLAUDE_PROMPT=`Écris un nouvel épisode de « Les aventures de Roux », u
 
 ${FORMAT_HELP}
 
-Règles : 6 à 9 scènes, 2 à 4 répliques par scène, phrases courtes et simples, une action par ligne juste avant la réplique qu'elle accompagne, 1 ou 2 bruitages par scène maximum, une morale douce à la fin dite par un personnage. Personnages : Roux (renard curieux), Pistache (lapin), Caramel (ourson gentil), Olympe (chouette sage), Noisette (belette espiègle), Plume (petite oie timide et rêveuse), plus un Narrateur. Le titre commence par « Épisode N · ».
+Règles : 6 à 9 scènes, 2 à 4 répliques par scène, phrases courtes et simples, une action par ligne juste avant la réplique qu'elle accompagne, 1 ou 2 bruitages par scène maximum, si l'histoire parle d'un objet (ballon, gâteau, cadeau, livre, fleur, panier, cerf-volant) fais-le apparaître avec (objet : …) et des actions « prend / lance … à / pose le … », une morale douce à la fin dite par un personnage. Personnages : Roux (renard curieux), Pistache (lapin), Caramel (ourson gentil), Olympe (chouette sage), Noisette (belette espiègle), Plume (petite oie timide et rêveuse), plus un Narrateur. Le titre commence par « Épisode N · ».
 
 Exemple :
 ${SCRIPT_EX}
